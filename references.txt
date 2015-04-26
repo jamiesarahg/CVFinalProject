@@ -1,0 +1,2 @@
+References:
+http://docs.opencv.org/master/d5/daf/tutorial_py_histogram_equalization.html
