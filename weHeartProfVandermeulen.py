@@ -4,7 +4,7 @@ import os
 import numpy as np
 import fnmatch
 import math
-import statistics
+import statistics as stat
 
 def load_landmark_data(directory, num_images):
     #inputs directory of where landmark data is saved and number of images to load. 
@@ -90,6 +90,20 @@ def detectEdges(img):
     cv2.imshow('cannyresult',cv2.resize(canny_result,(0,0), fx=.5, fy=.5))
 
 def calculateLandmarkWeights(toothSamples):
+    distances = []
+    for tooth in toothSamples:
+        distancesPerTooth = []
+        for i in range(len(tooth)/2):
+            distancesPerPoint = []
+            x1 = tooth[i * 2]
+            y1 = tooth[x1 + 1]
+            for j in range(len(tooth)/2):
+                x2 = tooth[j * 2]
+                y2 = tooth[x2 + 1]
+                distance = math.sqrt(math.pow((x2 - x1), 2) + math.pow((y2 - y1), 2))
+                distancesPerPoint.append(distance)
+            distancesPerTooth.append(distancesPerPoint)
+        distances.append(distancesPerTooth)
     
 
 def alignFirstToSecondTooth(tooth1, tooth2, weights):
