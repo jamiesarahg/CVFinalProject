@@ -3,6 +3,8 @@ import cv2.cv as cv
 import os
 import numpy as np
 import fnmatch
+import math
+import statistics
 
 def load_landmark_data(directory, num_images):
     #inputs directory of where landmark data is saved and number of images to load. 
@@ -86,7 +88,32 @@ def detectEdges(img):
     canny_result = np.copy(img)
     canny_result[edges.astype(np.bool)]=0
     cv2.imshow('cannyresult',cv2.resize(canny_result,(0,0), fx=.5, fy=.5))
-       
+
+def calculateLandmarkWeights(toothSamples):
+    
+
+def alignFirstToSecondTooth(tooth1, tooth2, weights):
+    xTooth1 = tooth1[0::2]
+    yTooth1 = tooth1[1::2]
+    xTooth2 = tooth2[0::2]
+    yTooth2 = tooth2[1::2]
+    numberOfPoints = len(weights)
+    x1 = np.vdot(weights, xTooth1)
+    x2 = np.vdot(weights, xTooth2)
+    y1 = np.vdot(weights, yTooth1)
+    y2 = np.vdot(weights, yTooth2)
+    z = 0
+    c1 = 0
+    c2 = 0
+    for i in range(numberOfPoints):
+        z += weights[i] * (math.pow(xTooth2[i], 2) + math.pow(yTooth2[i], 2))
+        c1 += weights[i] * ((xTooth1[i] * xTooth2[i]) + (yTooth1[i] * yTooth2[i]))
+        c2 += weights[i] * ((yTooth1[i] * xTooth2[i]) - (xTooth1[i] * yTooth2[i]))
+    w = np.sum(weights)
+    a = np.array([x2,-y2,w,0],[y2,x2,0,w],[z,0,x2,y2],[0,z,-y2,x2])
+    b = np.array([x1,y1,c1,c2])
+    transformation = np.linalg.solve(a, b)
+    return transformation
 
 if __name__ == '__main__':
     #landmarks=load_landmark_data('_Data/Landmarks/original', 14)
