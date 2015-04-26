@@ -5,6 +5,8 @@ import numpy as np
 import fnmatch
 
 def load_landmark_data(directory, num_images):
+    #inputs directory of where landmark data is saved and number of images to load. 
+    #outputs a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data
     landmarks = np.zeros((num_images,8,80))
     for i in range(num_images):
         for j in range(8):
@@ -12,11 +14,14 @@ def load_landmark_data(directory, num_images):
     return landmarks
 
 def show_landmarks_on_images(imgDirectory, landmarks):
+    #degugging method for viewing landmark data on the image
+    #inputs image directory and the loaded landmark data
     counter=0
     for filename in fnmatch.filter(os.listdir(imgDirectory),'*.tif'):
         file_in = imgDirectory+"/"+filename
         img = cv2.imread(file_in)
         
+        #draws circles on the image where the landmarks are for each x and y coordinate pair
         for teeth in landmarks[counter]:
             for j in range(8):
                 count=0
@@ -32,7 +37,8 @@ def show_landmarks_on_images(imgDirectory, landmarks):
         counter+=1
 
 def preprocess_images(directory):
-    images=np.zeros((14,1600,3023,3))
+    images=np.zeros((14,1600,3023,3)) #array 14(number of images) long with arrays of the image dimentions
+    #load images into images array
     count=0
     for filename in fnmatch.filter(os.listdir(directory),'*.tif'):
         file_in = directory+"/"+filename
