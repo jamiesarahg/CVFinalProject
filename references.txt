@@ -1,2 +1,3 @@
 References:
-http://docs.opencv.org/master/d5/daf/tutorial_py_histogram_equalization.html
+Dighe, S., & Shriram, R. (2012). P reprocessing, Segmentation and Matching of Dental Radiographs used in Dental Biometrics. International Journal of Science and Applied Information Technology, 1(2).
+Histograms - 2: Histogram Equalization. (n.d.). Retrieved April 26, 2015, from Open Source Computer Vision website: http://docs.opencv.org/master/d5/daf/tutorial_py_histogram_equalization.html
