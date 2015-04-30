@@ -29,7 +29,7 @@ def calculateLandmarkWeights(toothSamples):
                 y1 = tooth[landmarkPointNum * 2 + 1]
                 x2 = tooth[landmarkPointNum2 * 2]
                 y2 = tooth[landmarkPointNum2 * 2 + 1] 
-                print x1
+                
                 
                  
                 distance = math.sqrt(math.pow((x2 - x1), 2) + math.pow((y2 - y1), 2)) #calculate the distances of two landmarks in the sample
@@ -49,20 +49,18 @@ def calculateLandmarkWeights(toothSamples):
         pointSumIn = 1/float(pointSum)
         weightsOfPoints.append(pointSumIn)
         #print pointSum
-            
-    print weightsOfPoints
     return weightsOfPoints        
     
 
 def alignFirstToSecondTooth(tooth1, tooth2, weights=[1]*40):
     #inputs - tooth1 and tooth2 are landmark data from two different samples of the same tooth
     #weights - output of calculateLandmarkWeights function of the respective tooth
-    print weights
     xTooth1 = tooth1[0::2]
     yTooth1 = tooth1[1::2]
     xTooth2 = tooth2[0::2]
     yTooth2 = tooth2[1::2]
     numberOfPoints = len(weights)
+
     x1 = np.vdot(weights, xTooth1)
     x2 = np.vdot(weights, xTooth2)
     y1 = np.vdot(weights, yTooth1)
@@ -75,7 +73,7 @@ def alignFirstToSecondTooth(tooth1, tooth2, weights=[1]*40):
         c1 += weights[i] * ((xTooth1[i] * xTooth2[i]) + (yTooth1[i] * yTooth2[i]))
         c2 += weights[i] * ((yTooth1[i] * xTooth2[i]) - (xTooth1[i] * yTooth2[i]))
     w = np.sum(weights)
-    a = np.array([[x2,-y2,w,0],[y2,x2,0,w],[z,0,x2,y2],[0,z,-y2,x2]])
+    a = np.array([[x2,(-y2),1,0],[y2,x2,0,1],[z,0,x2,y2],[0,z,(-y2),x2]])
     b = np.array([x1,y1,c1,c2])
     transformation = np.linalg.solve(a, b)
 
@@ -86,9 +84,7 @@ def alignSetOf1Tooth(landmarks, num):
     for i in range(1, toothLandmarks.shape[0]):
         xi = toothLandmarks[i]
         transformationMatrix = alignFirstToSecondTooth(toothLandmarks[0], toothLandmarks[i])
-
-        t = [transformationMatrix[2], transformationMatrix[3]] * 40
-        print t
+        t = [transformationMatrix[3], transformationMatrix[2]] * 40
         ax = transformationMatrix[0]
         ay = transformationMatrix[1]
         M = []
@@ -98,10 +94,12 @@ def alignSetOf1Tooth(landmarks, num):
            bottom = ay * xi[2*j] + ax * xi[2*j+1]
            M.append(bottom)
         E = M+t
-        np.savetxt('_Data/AlignedLandmarks/aligned'+str(i)+'.txt',E)
-        img = cv2.imread('_Data/Radiographs/'+str(i)+'.tif')
-
+        np.savetxt('_Data/AlignedLandmarks/aligned'+str(i+1)+'.txt',E)
+        img = cv2.imread('_Data/Radiographs/'+str(i+1)+'.tif')
+        tests.plot1toothLandmarkonImage(img, toothLandmarks[0])
+        tests.plot1toothLandmarkonImage(img, toothLandmarks[i])
         tests.plot1toothLandmarkonImage(img, E)
+        
         
 def transformAll(landmarks):
     print landmarks.shape[1]
@@ -111,8 +109,11 @@ if __name__ == '__main__':
     landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)
     out = getLandmarksOfTooth(landmarks, 0)
     alignSetOf1Tooth(landmarks,0)
+    img = cv2.imread('_Data/Radiographs/1.tif')
+    E = landmarks[0][0]
+    tests.plot1toothLandmarkonImage(img, E)    
     transformAll(landmarks)
     #calculateLandmarkWeights(out)
-    prep.show_landmarks_on_images('_Data/Radiographs', landmarks)    
+    #prep.show_landmarks_on_images('_Data/Radiographs', landmarks)    
     #out = import_images('_Data/Radiographs')
     #preprocess_all_images(out)
