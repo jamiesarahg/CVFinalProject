@@ -1,3 +1,5 @@
+import cv2
+import cv2.cv as cv
 def plot1toothLandmarkonImage(img, E):       
         x = 0
         y = 1

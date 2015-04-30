@@ -57,7 +57,7 @@ def calculateLandmarkWeights(toothSamples):
 def alignFirstToSecondTooth(tooth1, tooth2, weights=[1]*40):
     #inputs - tooth1 and tooth2 are landmark data from two different samples of the same tooth
     #weights - output of calculateLandmarkWeights function of the respective tooth
-
+    print weights
     xTooth1 = tooth1[0::2]
     yTooth1 = tooth1[1::2]
     xTooth2 = tooth2[0::2]
@@ -86,18 +86,20 @@ def alignSetOf1Tooth(landmarks, num):
     for i in range(1, toothLandmarks.shape[0]):
         xi = toothLandmarks[i]
         transformationMatrix = alignFirstToSecondTooth(toothLandmarks[0], toothLandmarks[i])
+
         t = [transformationMatrix[2], transformationMatrix[3]] * 40
+        print t
         ax = transformationMatrix[0]
         ay = transformationMatrix[1]
         M = []
         for j in range(40):
            top = ax * xi[2*j] - ay * xi[2*j+1]
            M.append(top)
-           bottom = ax * xi[2*j] + ay * xi[2*j+1]
+           bottom = ay * xi[2*j] + ax * xi[2*j+1]
            M.append(bottom)
         E = M+t
         np.savetxt('_Data/AlignedLandmarks/aligned'+str(i)+'.txt',E)
-        img = cv2.imread('_Data/Radiographs/01.tif')
+        img = cv2.imread('_Data/Radiographs/'+str(i)+'.tif')
 
         tests.plot1toothLandmarkonImage(img, E)
         
