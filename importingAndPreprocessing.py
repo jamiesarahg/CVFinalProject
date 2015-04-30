@@ -18,32 +18,7 @@ def load_landmark_data(directory, num_images):
             landmarks[i][j] = np.loadtxt(directory+'/landmarks'+str(i+1)+'-'+str(j+1)+'.txt')
     return landmarks
 
-def show_landmarks_on_images(imgDirectory, landmarks):
-    #degugging method for viewing landmark data on the image
-    #inputs image directory and the loaded landmark data
-    counter=0
-    for filename in fnmatch.filter(os.listdir(imgDirectory),'*.tif'):
-        file_in = imgDirectory+"/"+filename
-        img = cv2.imread(file_in)
-        
-        show_landmarks_on_image(img, landmarks[counter])
-        counter+=1
-        
-def show_landmarks_on_image(img, landmark):
-        #draws circles on the image where the landmarks are for each x and y coordinate pair
-        for teeth in landmark:
-            print teeth
-            for j in range(8):
-                count=0
-                x=0
-                y=1
-                for i in range(40):
-                    cv2.circle(img,(int(landmark[j][x]),int(landmark[j][y])),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
-                    count+=1
-                    x=x+2
-                    y=y+2
-        small = cv2.resize(img, (0,0), fx=0.5, fy=0.5) 
-        cv2.imshow('img'+str(counter),small)
+
         
 
 def import_images(directory, show=False):
