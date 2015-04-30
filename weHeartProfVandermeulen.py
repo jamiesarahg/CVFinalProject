@@ -5,6 +5,7 @@ import numpy as np
 import fnmatch
 import math
 import statistics as stat
+#from importingAndPreprocessing import *
 
 def load_landmark_data(directory, num_images):
     #inputs directory of where landmark data is saved and number of images to load. 
@@ -14,7 +15,11 @@ def load_landmark_data(directory, num_images):
         for j in range(8):
             landmarks[i][j] = np.loadtxt(directory+'/landmarks'+str(i+1)+'-'+str(j+1)+'.txt')
     return landmarks
-
+def getLandmarksOfTooth(landmarks, toothNum):
+    Outlandmarks = np.zeros((14,80))
+    for i in range(14):
+        Outlandmarks[i] = landmarks[i][toothNum][:]
+    return Outlandmarks
 def show_landmarks_on_images(imgDirectory, landmarks):
     #degugging method for viewing landmark data on the image
     #inputs image directory and the loaded landmark data
@@ -73,6 +78,7 @@ def preprocess_image(img, kernel = 13, show=False):
     
 
 def preprocess_all_images(images, kernel=13):
+    # run code to process all the images
     images_out = [0]*len(images)
     for i in range(len(images)):
         img = images[i]
@@ -90,23 +96,47 @@ def detectEdges(img):
     cv2.imshow('cannyresult',cv2.resize(canny_result,(0,0), fx=.5, fy=.5))
 
 def calculateLandmarkWeights(toothSamples):
-    distances = []
-    for tooth in toothSamples:
-        distancesPerTooth = []
-        for i in range(len(tooth)/2):
-            distancesPerPoint = []
-            x1 = tooth[i * 2]
-            y1 = tooth[x1 + 1]
-            for j in range(len(tooth)/2):
-                x2 = tooth[j * 2]
-                y2 = tooth[x2 + 1]
-                distance = math.sqrt(math.pow((x2 - x1), 2) + math.pow((y2 - y1), 2))
-                distancesPerPoint.append(distance)
-            distancesPerTooth.append(distancesPerPoint)
-        distances.append(distancesPerTooth)
+    print toothSamples[0]
+    print toothSamples[1]
+    # input- toothSamples - landmark data of one of the teeth but all 14 samples
+    l = 0
+    y = True
+    weightsOfPoints = []
+    for landmarkPointNum in range(len(toothSamples[0])/2): #pick a landmark point to calculate the weight for
+        variancesPerPoint = []
+        for landmarkPointNum2 in range(len(toothSamples[0])/2): #pick a landmark point to compare to the original landmark
+            distances = []
+            for tooth in toothSamples: #loop through all of samples
+                x1 = tooth[landmarkPointNum * 2]
+                y1 = tooth[landmarkPointNum * 2 + 1]
+                x2 = tooth[landmarkPointNum2 * 2]
+                y2 = tooth[landmarkPointNum2 * 2 + 1] 
+                 
+                distance = math.sqrt(math.pow((x2 - x1), 2) + math.pow((y2 - y1), 2)) #calculate the distances of two landmarks in the sample
+                distances.append(distance)
+            if l==1:
+                #print distances
+                l=l+1 
+                l = False
+            var = stat.variance(distances) #find the variance of all of the distances from the particular landmark point to all of the other landmarks
+            variancesPerPoint.append(var) 
+            
+        if y:
+            #print variancesPerPoint
+            y = False 
+        pointSum = np.sum(variancesPerPoint) #calculate the sum of all of the variances for the individual landmark point
+        pointSumIn = 1/float(pointSum)
+        weightsOfPoints.append(pointSumIn)
+        #print pointSum
+            
+    print weightsOfPoints
+    return weightsOfPoints        
     
 
 def alignFirstToSecondTooth(tooth1, tooth2, weights):
+    #inputs - tooth1 and tooth2 are landmark data from two different samples of the same tooth
+    #weights - output of calculateLandmarkWeights function of the respective tooth
+    
     xTooth1 = tooth1[0::2]
     yTooth1 = tooth1[1::2]
     xTooth2 = tooth2[0::2]
@@ -130,7 +160,14 @@ def alignFirstToSecondTooth(tooth1, tooth2, weights):
     return transformation
 
 if __name__ == '__main__':
-    #landmarks=load_landmark_data('_Data/Landmarks/original', 14)
+    landmarks=load_landmark_data('_Data/Landmarks/original', 14)
+    print landmarks.shape
+    print landmarks[0][:][:].shape
+    print landmarks[:][0][:].shape
+    print landmarks[:][:][0].shape
+    out = getLandmarksOfTooth(landmarks, 0)
+    print out.shape
+    calculateLandmarkWeights(out)
     #show_landmarks_on_images('_Data/Radiographs', landmarks)    
-    out = import_images('_Data/Radiographs')
-    preprocess_all_images(out)
+    #out = import_images('_Data/Radiographs')
+    #preprocess_all_images(out)
