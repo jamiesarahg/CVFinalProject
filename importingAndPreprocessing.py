@@ -1,8 +1,14 @@
 import cv2
 import cv2.cv as cv
 import os
+import fnmatch
 import numpy as np
 
+
+def test():
+    print 'TADA'
+    return
+    
 def load_landmark_data(directory, num_images):
     #inputs directory of where landmark data is saved and number of images to load. 
     #outputs a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data
