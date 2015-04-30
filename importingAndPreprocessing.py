@@ -26,20 +26,25 @@ def show_landmarks_on_images(imgDirectory, landmarks):
         file_in = imgDirectory+"/"+filename
         img = cv2.imread(file_in)
         
+        show_landmarks_on_image(img, landmarks[counter])
+        counter+=1
+        
+def show_landmarks_on_image(img, landmark):
         #draws circles on the image where the landmarks are for each x and y coordinate pair
-        for teeth in landmarks[counter]:
+        for teeth in landmark:
+            print teeth
             for j in range(8):
                 count=0
                 x=0
                 y=1
                 for i in range(40):
-                    cv2.circle(img,(int(landmarks[counter][j][x]),int(landmarks[counter][j][y])),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
+                    cv2.circle(img,(int(landmark[j][x]),int(landmark[j][y])),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
                     count+=1
                     x=x+2
                     y=y+2
         small = cv2.resize(img, (0,0), fx=0.5, fy=0.5) 
         cv2.imshow('img'+str(counter),small)
-        counter+=1
+        
 
 def import_images(directory, show=False):
   #  images=np.zeros((14,1600,3023,3)) #array 14(number of images) long with arrays of the image dimentions
