@@ -54,3 +54,5 @@ def show_landmarks_on_images(imgDirectory, landmarks):
         small = cv2.resize(img, (0,0), fx=0.5, fy=0.5) 
         cv2.imshow('img'+str(counter),small)
         counter+=1
+    cv2.waitKey(0)
+        

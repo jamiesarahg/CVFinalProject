@@ -49,7 +49,7 @@ def calculateLandmarkWeights(toothSamples):
         
     return weightsOfPoints        
     
-def alignFirstToSecondTooth(tooth1, tooth2, weights):#=[1]*40):
+def alignFirstToSecondTooth(tooth1, tooth2, weights=[1]*40):
     #inputs - tooth1 and tooth2 are landmark data from two different samples of the same tooth
     #weights - output of calculateLandmarkWeights function of the respective tooth
     xTooth1 = tooth1[0::2]
@@ -71,14 +71,22 @@ def alignFirstToSecondTooth(tooth1, tooth2, weights):#=[1]*40):
         c2 += weights[i] * ((yTooth1[i] * xTooth2[i]) - (xTooth1[i] * yTooth2[i]))
     w = np.sum(weights)
     w = 1
-    print w
     a = np.array([[x2,(-y2),w,0],[y2,x2,0,w],[z,0,x2,y2],[0,z,(-y2),x2]])
     b = np.array([x1,y1,c1,c2])
     transformation = np.linalg.solve(a, b)
 
     return transformation
     
-def alignSetOf1Tooth(template, toothLandmarks, weights):
+def alignSetOf1Tooth(template, toothLandmarks, weights=[1]*80):
+    #function to align all samples of one tooth
+    '''
+    inputs:
+    template is the landmark data for which everything should be aligned to
+    toothLandmarks is a 2d array of the landmark data for this tooth
+    weights is the output of the calculate weights function
+    
+    Follows Active Shape Model paper
+    '''
     output = []
     for i in range(0, toothLandmarks.shape[0]):
 
@@ -94,7 +102,6 @@ def alignSetOf1Tooth(template, toothLandmarks, weights):
            bottom = ay * xi[2*j] + ax * xi[2*j+1]
            M.append(bottom)
         E = map(sum, zip(M,t))#M+t
-        print E
         #img = cv2.imread('_Data/Radiographs/'+str(i+1)+'.tif')
         #tests.plot1toothLandmarkonImage(img, toothLandmarks[0])
         #tests.plot1toothLandmarkonImage(img, toothLandmarks[i])
@@ -107,23 +114,70 @@ def alignSetOf1Tooth(template, toothLandmarks, weights):
         #
 
 def alignmentIteration(landmarks, template, init = False):
+    '''
+    Aligns all of the landmarks from the input landmarks to the template 
+    landmarks : all of the landmark data to be aligned
+    template: if init is True, doesnt matter. else, 2D array (8,80) of template for each tooth)
+    '''
     newLandmarks = landmarks
     for toothNum in range(0,8):
-        print toothNum
         toothLandmarks = tools.getLandmarksOfTooth(landmarks, toothNum)
         if init==True:
-            template = toothLandmarks[0]
+            templateData = toothLandmarks[0]
+        else:
+            templateData = template[toothNum]
         weights = calculateLandmarkWeights(toothLandmarks)
-        print 'hey'
-        out = alignSetOf1Tooth(template,toothLandmarks, weights)
-        print toothNum
+        out = alignSetOf1Tooth(templateData,toothLandmarks, weights)
         for i in range(14):
-            print i
             newLandmarks[i][toothNum] = out[i]
     return newLandmarks
     
+def calcMean(landmarks):
+    '''calculates mean of landmarks. takes in 4d array of (14,8,80) and returns mean array of shape (8,80)'''
+    mean = np.zeros([8,80])
+    for i in range(landmarks.shape[1]):
+        for k in range(landmarks.shape[2]):
+            tot = 0
+            for j in range(landmarks.shape[0]):
+                tot += landmarks[j][i][k]
+            mean[i][k] = tot
+    return mean
+def normalize(mean,template):
+    '''
+    normalizes the calculated mean to the given template
+    mean:2d array of shape of (8, 80) of landmark data for each of the 8 teeth
+    template:2d array of shape of (8, 80) of landmark data for each of the 8 teeth
+    outputs:2d array of shape of (8, 80) of landmark data for each of the 8 teeth of the mean mapped to the template
+    '''
+    #weights = calculateLandmarkWeights(mean) NEED TO ADD THIS FUNCTIONALITY
+
+    normalized = np.zeros([8,80])
+    for toothnum in range(8):
+        transformationMatrix = alignFirstToSecondTooth(template[toothnum],mean[toothnum])
+        xi = mean[toothnum]
+        t = [transformationMatrix[3], transformationMatrix[2]] * 40
+        ax = transformationMatrix[0]
+        ay = transformationMatrix[1]
+        M = []
+        for j in range(40):
+           top = ax * xi[2*j] - ay * xi[2*j+1]
+           M.append(top)
+           bottom = ay * xi[2*j] + ax * xi[2*j+1]
+           M.append(bottom)
+        E = map(sum, zip(M,t))
+        normalized[toothnum]=E
+    return normalized
+            
 def alignment(landmarks):
+    '''top level alignment function. takees in landmark data and returns aligned landmark data'''
     new = alignmentIteration(landmarks,None, init=True)
+    mean = calcMean(new)
+    normalized = normalize(mean, landmarks[0])
+    
+    while True:
+        new = alignmentIteration(new,normalized, init=True)
+        mean = calcMean(new)
+        normalized = normalize(mean, landmarks[0])
     #tests.show_landmarks_on_images('_Data/Radiographs/', landmarks)
-    tests.show_landmarks_on_images('_Data/Radiographs/', new)
+        tests.show_landmarks_on_images('_Data/Radiographs/', new)
     

@@ -11,7 +11,7 @@ import importingAndPreprocessing as prep
 import tools
 
 
-
+            
 def calculateMeanShape(shapes):
     #shapes is an array of shapes, each consisting of an array containing interleaved x and y coordinates for the respective shape's landmarks
     meanShape = np.zeros(len(shapes[0]))
@@ -19,7 +19,7 @@ def calculateMeanShape(shapes):
         meanShape.append(np.mean(shapes[:][i]))
     return meanShape
     
-def calculateCovarianceMatrix(meanShape=None,alignedShapes):
+def calculateCovarianceMatrix(alignedShapes, meanShape=None):
     #alignedShapes is an array of aligned shapes, each consisting of an array containing interleaved x and y coordinates for the respective shape's landmarks
     if meanShape is None:
         meanShape = calculateMeanShape(alignedShapes)
@@ -72,6 +72,7 @@ if __name__ == '__main__':
     landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)    
     tests.show_landmarks_on_images('_Data/Radiographs', landmarks)
     alignment.alignment(landmarks)
+    #calcMean(landmarks)
     #toothSamples = tools.getLandmarksOfTooth(landmarks, 0)
     #weights = alignment.calculateLandmarkWeights(toothSamples)
     #alignment.alignSetOf1Tooth(landmarks,0, weights)
