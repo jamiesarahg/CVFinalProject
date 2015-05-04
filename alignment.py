@@ -29,7 +29,7 @@ def calculateLandmarkWeights(toothSamples):
                 
                 
                  
-                distance = math.sqrt(math.pow((x2 - x1), 2) + math.pow((y2 - y1), 2)) #calculate the distances of two landmarks in the sample
+                distance = tools.distance(x1,x2,y1,y2)
                 distances.append(distance)
             
             if l==1:

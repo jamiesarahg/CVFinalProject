@@ -18,9 +18,6 @@ def load_landmark_data(directory, num_images):
             landmarks[i][j] = np.loadtxt(directory+'/landmarks'+str(i+1)+'-'+str(j+1)+'.txt')
     return landmarks
 
-
-        
-
 def import_images(directory, show=False):
   #  images=np.zeros((14,1600,3023,3)) #array 14(number of images) long with arrays of the image dimentions
     #load images into images array
@@ -58,18 +55,68 @@ def preprocess_image(img, kernel = 13, show=False):
 
 def preprocess_all_images(images, kernel=13):
     # run code to process all the images
-    images_out = [0]*len(images)
+    xgrads = []
+    ygrads = []
     for i in range(len(images)):
         img = images[i]
-        images_out[i] = preprocess_image(img, kernel = kernel)
-        detectEdges(images_out[i])
+        [xgrad, ygrad] =process_image(img, kernel)
+        xgrads.append(xgrad)
+        ygrads.append(ygrad)
+    return (xgrads, ygrads)
+    
+def process_image(img, kernel):
+    #gradients is a tuble of two images: xgrad and ygaad
+    imgEdit = preprocess_image(img, kernel = kernel)
+    gradients=calculateXYGradient(imgEdit, show=True)
+    return gradients
 
-def detectEdges(img):
+def detectEdges(img, i):
     threshold1 = 30
     threshold2 = threshold1*3 #ratio is 3:1 for higher to lower threshold
     sobel = 3
-    gradient = False
+    gradient = True
     edges = cv2.Canny(img, threshold1, threshold2, sobel, L2gradient=gradient)
     canny_result = np.copy(img)
     canny_result[edges.astype(np.bool)]=0
-    cv2.imshow('cannyresult',cv2.resize(canny_result,(0,0), fx=.5, fy=.5))
+    cv2.imshow('cannyresult'+str(i),cv2.resize(edges,(0,0), fx=.5, fy=.5))
+
+def calculateXYGradients(images, show=False):
+    xGradientImages = []
+    yGradientImages = []
+    for img in images:
+        #sobelx = np.uint8(np.absolute(cv2.Sobel(img,cv2.CV_64F,1,0,ksize=5)))
+        sobelx = cv2.Sobel(img,cv2.CV_8U,1,0,ksize=5)
+        xGradientImages.append(sobelx)
+        #sobely = np.uint8(np.absolute(cv2.Sobel(img,cv2.CV_64F,0,1,ksize=5)))
+        sobely = cv2.Sobel(img,cv2.CV_8U,0,1,ksize=5)
+        yGradientImages.append(sobely)
+        if show:
+            cv2.imshow('original',cv2.resize(img, (0,0), fx=0.25, fy=0.25))
+            cv2.waitKey(0)
+            cv2.imshow('xGradient',cv2.resize(sobelx, (0,0), fx=0.25, fy=0.25))
+            cv2.waitKey(0)
+            cv2.imshow('yGradient',cv2.resize(sobely, (0,0), fx=0.25, fy=0.25))
+            cv2.waitKey(0)
+    return xGradientImages, yGradientImages
+def calculateXYGradient(img, show=False):
+        xGradientImages = []
+        yGradientImages = []
+        #sobelx = np.uint8(np.absolute(cv2.Sobel(img,cv2.CV_64F,1,0,ksize=5)))
+        sobelx = cv2.Sobel(img,cv2.CV_8U,1,0,ksize=5)
+        xGradientImages.append(sobelx)
+        #sobely = np.uint8(np.absolute(cv2.Sobel(img,cv2.CV_64F,0,1,ksize=5)))
+        sobely = cv2.Sobel(img,cv2.CV_8U,0,1,ksize=5)
+        yGradientImages.append(sobely)
+        if show:
+            cv2.imshow('original',cv2.resize(img, (0,0), fx=0.25, fy=0.25))
+            cv2.waitKey(0)
+            cv2.imshow('xGradient',cv2.resize(sobelx, (0,0), fx=0.25, fy=0.25))
+            cv2.waitKey(0)
+            cv2.imshow('yGradient',cv2.resize(sobely, (0,0), fx=0.25, fy=0.25))
+            cv2.waitKey(0)
+        return xGradientImages, yGradientImages
+
+
+if __name__ == '__main__':
+    out = import_images('_Data/Radiographs')
+    preprocess_all_images(out)
