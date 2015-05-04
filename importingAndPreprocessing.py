@@ -64,7 +64,7 @@ def preprocess_all_images(images, kernel=13):
         ygrads.append(ygrad)
     return (xgrads, ygrads)
     
-def process_image(img, kernel):
+def process_image(img, kernel=13):
     #gradients is a tuble of two images: xgrad and ygaad
     imgEdit = preprocess_image(img, kernel = kernel)
     gradients=calculateXYGradient(imgEdit, show=True)

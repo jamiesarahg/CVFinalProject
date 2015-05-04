@@ -202,7 +202,7 @@ def alignment(landmarks):
         mean = calcMean(newLandmark)
         normalized = normalize(mean, newLandmark[0])
         count +=1
-        if count >= 25:
+        if count >= 5:#25:
             done = True
     return newLandmark
     tests.show_landmarks_on_images('_Data/Radiographs/', newLandmark)
