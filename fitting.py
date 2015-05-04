@@ -19,3 +19,11 @@ def calculateXYGradients(images, show=False):
             cv2.imshow('yGradient',cv2.resize(sobely, (0,0), fx=0.25, fy=0.25))
             cv2.waitKey(0)
     return xGradientImages, yGradientImages
+
+def averagePointDistance(points):
+    #points is an  array containing interleaved x and y coordinates for all points
+    distances = []
+    for i in range(len(points)/2):
+        x1 = points[2*i]
+        y1 = points[2*i+1]
+        distance = tools.distance()
