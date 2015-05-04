@@ -194,12 +194,16 @@ def alignment(landmarks):
     mean = calcMean(newLandmark)
     normalized = normalize(mean, landmarks[0])
     done = False
+    count = 0
     while done==False:
         new = alignmentIteration(newLandmark,normalized, init=False)
         done = checkConvergence(new[1])
         newLandmark = new[0]
         mean = calcMean(newLandmark)
         normalized = normalize(mean, newLandmark[0])
-    
+        count +=1
+        if count >= 25:
+            done = True
+    return newLandmark
     tests.show_landmarks_on_images('_Data/Radiographs/', newLandmark)
     
