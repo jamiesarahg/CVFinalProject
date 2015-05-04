@@ -34,6 +34,7 @@ def import_images(directory, show=False):
     if show:
         for img in images:
             cv2.imshow('img',cv2.resize(img, (0,0), fx=0.25, fy=0.25))
+            cv2.waitKey(0)
     return images
     
 def claheObject(img, clipLimit=4.0, tileGridSize=(20,15)):
