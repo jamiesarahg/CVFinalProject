@@ -137,17 +137,7 @@ def alignmentIteration(landmarks, template, init = False):
             newLandmarks[i][toothNum] = out[0][i]
     return (newLandmarks,transformations)
     
-def calcMean(landmarks):
-    '''calculates mean of landmarks. takes in 4d array of (14,8,80) and returns mean array of shape (8,80)'''
-    mean = np.zeros([8,80])
-    for i in range(landmarks.shape[1]):
-        for k in range(landmarks.shape[2]):
-            tot = 0
-            for j in range(landmarks.shape[0]):
-                tot += landmarks[j][i][k]
-            mean[i][k] = tot/14.0
 
-    return mean
 def normalize(mean,template):
     '''
     normalizes the calculated mean to the given template
@@ -195,7 +185,7 @@ def alignment(landmarks):
     oldLandmarks = landmarks
     new = alignmentIteration(landmarks,None, init=True)
     newLandmark = new[0]
-    mean = calcMean(newLandmark)
+    mean = tools.calcMean(newLandmark)
     normalized = normalize(mean, landmarks[0])
     done = False
     count = 0
@@ -204,7 +194,7 @@ def alignment(landmarks):
         #done = checkConvergence(new[1])
         done = checkConvergence2(new[0], oldLandmarks)
         newLandmark = new[0]
-        mean = calcMean(newLandmark)
+        mean = tools.calcMean(newLandmark)
         normalized = normalize(mean, newLandmark[0])
         count +=1
         if count >= 25:
