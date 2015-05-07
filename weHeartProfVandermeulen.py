@@ -73,7 +73,7 @@ if __name__ == '__main__':
     landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)    
     #tests.show_landmarks_on_images('_Data/Radiographs', landmarks)
     aligned = alignment.alignment(landmarks)
-    PCA(aligned)
+    #PCA(aligned)
     #calcMean(landmarks)
     #toothSamples = tools.getLandmarksOfTooth(landmarks, 0)
     #weights = alignment.calculateLandmarkWeights(toothSamples)
