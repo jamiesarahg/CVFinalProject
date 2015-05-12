@@ -46,12 +46,15 @@ def calculateLandmarkWeights(toothSamples):
         pointSumIn = 1/float(pointSum)
         weightsOfPoints.append(pointSumIn)
         #print pointSum
-        
+    #weightsOfPoints = weightsOfPoints/np.sum(weightsOfPoints)
     return weightsOfPoints        
     
 def alignFirstToSecondTooth(tooth1, tooth2, weights=[1]*40):
     #inputs - tooth1 and tooth2 are landmark data from two different samples of the same tooth
     #weights - output of calculateLandmarkWeights function of the respective tooth
+ 
+    #weights1 = [x/np.sum(weights) for x in weights]
+    #weights = weights1
     xTooth1 = tooth1[0::2]
     yTooth1 = tooth1[1::2]
     xTooth2 = tooth2[0::2]
@@ -70,7 +73,7 @@ def alignFirstToSecondTooth(tooth1, tooth2, weights=[1]*40):
         c1 += weights[i] * ((xTooth1[i] * xTooth2[i]) + (yTooth1[i] * yTooth2[i]))
         c2 += weights[i] * ((yTooth1[i] * xTooth2[i]) - (xTooth1[i] * yTooth2[i]))
     w = np.sum(weights)
-    w = 1
+    #w = 1
     a = np.array([[x2,(-y2),w,0],[y2,x2,0,w],[z,0,x2,y2],[0,z,(-y2),x2]])
     b = np.array([x1,y1,c1,c2])
     transformation = np.linalg.solve(a, b)
@@ -92,7 +95,7 @@ def alignSetOf1Tooth(template, toothLandmarks, weights=[1]*80):
     for i in range(0, toothLandmarks.shape[0]):
 
         xi = toothLandmarks[i]
-        transformationMatrix = alignFirstToSecondTooth(template, toothLandmarks[i], weights)
+        transformationMatrix = alignFirstToSecondTooth(template, toothLandmarks[i])#, weights)
         print transformationMatrix
         t = [transformationMatrix[3], transformationMatrix[2]] * 40
         ax = transformationMatrix[0]
@@ -133,8 +136,11 @@ def alignmentIteration(landmarks, template, init = False):
         weights = calculateLandmarkWeights(toothLandmarks)
         out = alignSetOf1Tooth(templateData,toothLandmarks, weights)
         transformations.append(out[1])
+        
         for i in range(14):
+
             newLandmarks[i][toothNum] = out[0][i]
+    #print newLandmarks[1][1]
     return (newLandmarks,transformations)
     
 
@@ -185,14 +191,15 @@ def alignment(landmarks):
     normalized = normalize(mean, landmarks[0])
     done = False
     count = 0
+    tests.show_landmarks_on_images('_Data/Radiographs/', newLandmark)
     while done==False:
         new = alignmentIteration(newLandmark,normalized, init=False)
-        done = checkConvergence(new[1])
+        #done = checkConvergence(new[1])
         newLandmark = new[0]
         mean = tools.calcMean(newLandmark)
         normalized = normalize(mean, newLandmark[0])
         count +=1
-        if count >= 1:#25:
+        if count >= 5:#25:
             done = True
     return newLandmark
     tests.show_landmarks_on_images('_Data/Radiographs/', newLandmark)
