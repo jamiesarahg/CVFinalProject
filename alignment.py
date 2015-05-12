@@ -69,7 +69,7 @@ def alignFirstToSecondTooth(tooth1, tooth2, weights=[1]*40):
     c1 = 0
     c2 = 0
     for i in range(numberOfPoints):
-        z += weights[i] * (math.pow(xTooth2[i], 2) + math.pow(yTooth2[i], 2))
+        z += weights[i] * (xTooth2[i]**2 + yTooth2[i]**2)
         c1 += weights[i] * ((xTooth1[i] * xTooth2[i]) + (yTooth1[i] * yTooth2[i]))
         c2 += weights[i] * ((yTooth1[i] * xTooth2[i]) - (xTooth1[i] * yTooth2[i]))
     w = np.sum(weights)
@@ -95,9 +95,11 @@ def alignSetOf1Tooth(template, toothLandmarks, weights=[1]*80):
     for i in range(0, toothLandmarks.shape[0]):
 
         xi = toothLandmarks[i]
+
         transformationMatrix = alignFirstToSecondTooth(template, toothLandmarks[i])#, weights)
         print transformationMatrix
-        t = [transformationMatrix[3], transformationMatrix[2]] * 40
+        t = [transformationMatrix[2], transformationMatrix[3]] * 40
+
         ax = transformationMatrix[0]
         ay = transformationMatrix[1]
         M = []
@@ -155,9 +157,9 @@ def normalize(mean,template):
 
     normalized = np.zeros([8,80])
     for toothnum in range(8):
-        transformationMatrix = alignFirstToSecondTooth(template[toothnum],mean[toothnum])
+        transformationMatrix = alignFirstToSecondTooth(mean[toothnum],template[toothnum])
         xi = mean[toothnum]
-        t = [transformationMatrix[3], transformationMatrix[2]] * 40
+        t = [transformationMatrix[2], transformationMatrix[3]] * 40
         ax = transformationMatrix[0]
         ay = transformationMatrix[1]
         M = []
@@ -174,17 +176,21 @@ def normalize(mean,template):
 def checkConvergence(transformations):
     for transformationSet in transformations:
         for transformation in transformationSet:
-            if abs(1-transformation[0]) > 10e-4:
+            if (abs(1-transformation[0]) > 10e-4) or (abs(transformation[1]) > 10e-4) or (abs(transformation[2]) > 10e-4) or (abs(transformation[3]) > 10e-4):
+                print transformation
                 return False
-            if abs(transformation[1]) > 10e-4:
-                return False
-            if abs(transformation[2]) > 10e-4:
-                return False
-            if abs(transformation[3]) > 10e-4:
-                return False
-    return True         
+    return True      
+def checkConvergence2(newLandmarks, oldLandmarks):
+    for i in range(newLandmarks.shape[0]):
+        for j in range(newLandmarks.shape[1]):
+            for k in range(newLandmarks.shape[2]):
+                if abs(newLandmarks[i][j][k] - oldLandmarks[i][j][k]) > 10e-10:
+                    print newLandmarks
+                    return False
+    return True      
 def alignment(landmarks):
     '''top level alignment function. takees in landmark data and returns aligned landmark data'''
+    oldLandmarks = landmarks
     new = alignmentIteration(landmarks,None, init=True)
     newLandmark = new[0]
     mean = tools.calcMean(newLandmark)
@@ -195,12 +201,17 @@ def alignment(landmarks):
     while done==False:
         new = alignmentIteration(newLandmark,normalized, init=False)
         #done = checkConvergence(new[1])
+        done = checkConvergence2(new[0], oldLandmarks)
+
         newLandmark = new[0]
         mean = tools.calcMean(newLandmark)
         normalized = normalize(mean, newLandmark[0])
         count +=1
         if count >= 5:#25:
+
             done = True
+    
+    print count
     return newLandmark
-    tests.show_landmarks_on_images('_Data/Radiographs/', newLandmark)
+    #tests.show_landmarks_on_images('_Data/Radiographs/', newLandmark)
     
