@@ -52,9 +52,9 @@ def calculateLandmarkWeights(toothSamples):
 def alignFirstToSecondTooth(tooth1, tooth2, weights=[1/40]*40):
     #inputs - tooth1 and tooth2 are landmark data from two different samples of the same tooth
     #weights - output of calculateLandmarkWeights function of the respective tooth
- 
     #weights1 = [x/np.sum(weights) for x in weights]
     #weights = weights1
+
     xTooth1 = tooth1[0::2]
     yTooth1 = tooth1[1::2]
     xTooth2 = tooth2[0::2]
