@@ -58,6 +58,8 @@ def preprocess_all_images(images, kernel=13):
     xgrads = []
     ygrads = []
     for i in range(len(images)):
+        #preprocess_image(images[i], show=True)
+        #detectEdges(images[i],i)
         img = images[i]
         [xgrad, ygrad] =process_image(img, kernel)
         xgrads.append(xgrad)
