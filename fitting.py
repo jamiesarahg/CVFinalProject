@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import math
 
 def calculateXYGradients(images, show=False):
     xGradientImages = []
@@ -20,10 +21,72 @@ def calculateXYGradients(images, show=False):
             cv2.waitKey(0)
     return xGradientImages, yGradientImages
 
-def averagePointDistance(points):
-    #points is an  array containing interleaved x and y coordinates for all points
-    distances = []
-    for i in range(len(points)/2):
-        x1 = points[2*i]
-        y1 = points[2*i+1]
-        distance = tools.distance()
+def calculateLandmarkNormals(shapeLandmarks):
+    #shapeLandmarks is an  array containing interleaved x and y coordinates for all landmarks of one shape
+    normals = []
+    range = len(shapeLandmarks)/2
+    for i in range(range):
+        centerX = shapeLandmarks[2*i]
+        centerY = shapeLandmarks[2*i+1]
+        if(i==0):
+            prevX = shapeLandmarks[2*(range-1)]
+            prevY = shapeLandmarks[2*(range-1)+1]
+        else:
+            prevX = shapeLandmarks[2*(i-1)]
+            prevY = shapeLandmarks[2*(i-1)+1]
+        if(i==range-1):
+            nextX = shapeLandmarks[0]
+            nextY = shapeLandmarks[1]
+        else:
+            nextX = shapeLandmarks[2*(i+1)]
+            nextY = shapeLandmarks[2*(i+1)+1]
+    normalX, normalY = calculateLandmarkNormal(prevX, prevY, centerX, centerY, nextX, nextY)
+    normals.append(normalX, normalY)
+    return normals
+    
+def calculateLandmarkNormal(prevX, prevY, centerX, centerY, nextX, nextY):
+    #calculate the first surface vector
+    prevVectorX = prevX-centerX
+    prevVectorY = prevY-centerY
+    #calculate the first surface normal
+    n1x, n1y = calculatePerpendicularVector(prevVectorX, prevVectorY)
+    #make sure this surface normal is pointing outwards
+    if(crossProductPositive(prevVectorX, prevVectorY, n1x, n1y) is True):
+        n1x = -n1x
+        n1y = -n1y
+    #normalize this surface normal
+    n1length = lengthOfVector(n1x, n1y)
+    n1x = n1x / n1length
+    n1y = n1y / n1length
+    #calculate the second surface vector
+    nextVectorX = nextX-centerX
+    nextVectorY = nextY-centerY
+    #calculate the second surface normal
+    n2x, n2y = calculatePerpendicularVector(nextVectorX, nextVectorY)
+    #make sure this surface normal is pointing outwards
+    if(crossProductPositive(nextVectorX, nextVectorY, n2x, n2y) is False):
+        n2x = -n2x
+        n2y = -n2y
+    #normalize this surface normal
+    n2length = lengthOfVector(n2x, n2y)
+    n2x = n2x / n2length
+    n2y = n2y / n2length
+    #the required landmark normal is just the sum of the two calculated surface normals
+    normalX = n1x + n2x
+    normalY = n1y + n2y
+    normalLength = lengthOfVector(normalX, normalY)
+    normalX = normalX / normalLength
+    normalY = normalY / normalLength
+    return normalX, normalY
+    
+def calculatePerpendicularVector(vectorX, vectorY):
+    normalX = -vectorY
+    normalY = vectorX
+    return normalX, normalY
+    
+def lengthOfVector(vectorX, vectorY):
+    length = math.sqrt((vectorX*vectorX) + (vectorY*vectorY))
+    return length
+    
+def crossProductPositive(vector1X, vector1Y, vector2X, vector2Y):
+    return ((vector1X*vector2Y) - (vector1Y*vector2X)) > 0
