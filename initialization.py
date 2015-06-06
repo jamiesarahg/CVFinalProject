@@ -18,12 +18,13 @@ def getAvePosition(toothLandmarks):
     
     return int(x), int(y)
 def showAvePosition(avePositionsX, avePositionsY):
-    imgDirectory = '_Data/Radiographs'
-    file_in = imgDirectory+'/2'+'.tif'
+    imgDirectory = '_Data/Radiographs/extra'
+    file_in = imgDirectory+'/18'+'.tif'
     img = cv2.imread(file_in) 
     for i in range(8):
         cv2.circle(img,(avePositionsX[i],avePositionsY[i]),3,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
     cv2.imshow('testAvePosition',cv2.resize(img, (0,0), fx=0.25, fy=0.25))
+    cv2.waitKey(0)
     
 
 def initialization(landmarks):
