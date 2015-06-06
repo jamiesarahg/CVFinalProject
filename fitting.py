@@ -114,17 +114,24 @@ def pointsToPixels(points):
         pixels.extend(pixelX, pixelY)
     return pixels
     
-def buildGreyscaleModel(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, nbOfSamplesPerSide, gradientGreyscaleImages):
+def buildGreyscaleModel(landmarks, landmarkNormals, nbOfSamplesPerSide, gradientGreyscaleImages):
     #gradientGreyscaleImages is an array of all the images, after being converted into a gradient greyscale, in the training set
-    points = pointsOnLandmarkNormal(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, nbOfSamplesPerSide)
-    pixels = pointsToPixels(points)
-    #retrieve the value for each pixel across all images and store it in a (image X pixelvalues) array
+    #landmarks (and corresponding landmarkNormals) is an array of interleaved x and y coordinates for the same landmark across all these images
+    #pixels is an array (with size equal to landmarks/landmarkNormals/gradientGreyscaleImages) of arrays of interleaved x and y coordinates for the corresponding pixel set
+    pixels = []
+    for i in range(len(gradientGreyscaleImages)):
+        x = 2*i
+        y = 2*i+1
+        points = pointsOnLandmarkNormal(landmarks[x], landmarks[y], landmarkNormals[x], landmarkNormals[y], nbOfSamplesPerSide)
+        pixels = pointsToPixels(points)
+        pixels.append(pixels)
+    #retrieve the value for each pixelset per image and store it in a (image X pixelvalues) array
     totalPixelValues = []
-    for img in gradientGreyscaleImages:
+    for i in len(gradientGreyscaleImages):
         pixelValues = []
         absoluteSum = 0
-        for i in range(len(pixels/2)):
-            pixelValue = img[pixels(2*i)][pixels(2*i+1)]
+        for j in range(len(pixels[0])/2):
+            pixelValue = gradientGreyscaleImages[i][pixels[i][2*j]][pixels[i][2*j+1]]
             pixelValues.append(pixelValue)
             absoluteSum += abs(pixelValue)
         pixelValues = np.array(pixelValues) / absoluteSum
@@ -141,3 +148,5 @@ def buildGreyscaleModel(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, 
         covarianceMatrix = np.add(covarianceMatrix, np.matrix(np.outer(deviation,deviation)))
     covarianceMatrix = covarianceMatrix/len(gradientGreyscaleImages)
     return covarianceMatrix, meanPixelValues
+    
+def calculateNewLandmark(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, nbOfSamplesPerSide, gradientGreyscaleImages)
