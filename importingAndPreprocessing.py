@@ -4,14 +4,10 @@ import os
 import fnmatch
 import numpy as np
 
-
-def test():
-    print 'TADA'
-    return
-    
+   
 def load_landmark_data(directory, num_images):
-    #inputs directory of where landmark data is saved and number of images to load. 
-    #outputs a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data
+    """inputs directory of where landmark data is saved and number of images to load. 
+       outputs a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data"""
     landmarks = np.zeros((num_images,8,80))
     for i in range(num_images):
         for j in range(8):
@@ -19,13 +15,15 @@ def load_landmark_data(directory, num_images):
     return landmarks
 
 def import_images(directory, show=False):
-  #  images=np.zeros((14,1600,3023,3)) #array 14(number of images) long with arrays of the image dimentions
+    """ imputs: directory containing images.
+        optional imputs: show- if false won't show images
+        outputs a list of images
+        function loads all images in directory into the list"""
     #load images into images array
     images = []
     count=0
     for filename in fnmatch.filter(os.listdir(directory),'*.tif'):
         file_in = directory+"/"+filename
-        #images[count] = cv2.imread(file_in)
         images.append(cv2.imread(file_in,0))
         count+=1
     if show:
@@ -35,12 +33,17 @@ def import_images(directory, show=False):
     return images
     
 def claheObject(img, clipLimit=4.0, tileGridSize=(20,15)):
+    """ function returns a clahe object that is derived from the input img    """
     # create a CLAHE object (Arguments are optional).
     clahe = cv2.createCLAHE(clipLimit=clipLimit,tileGridSize=tileGridSize)
     return clahe
 
 
 def preprocess_image(img, kernel = 13, show=False):
+    """ Function for processing a single image
+        input - image that has already been uploaded
+        optional inputs: kernel - kernel parameter for blur, show - determines if images are shown
+        Outputs an image that has been smoothed and then adjusted"""
     filtered_img = cv2.medianBlur(img, kernel) #filter image to reduce noise
     if show:
         cv2.imshow('filtered', cv2.resize(filtered_img, (0,0), fx=0.25, fy=0.25))
@@ -54,34 +57,53 @@ def preprocess_image(img, kernel = 13, show=False):
     
 
 def preprocess_all_images(images, kernel=13):
+    """ code to preprocess all radiograph images.
+        input - list of images
+        optional input - kernel for blur
+        outputs list of edges of imagese"""
     # run code to process all the images
-    xgrads = []
-    ygrads = []
+    images_out = images
+    allEdges = []
     for i in range(len(images)):
-        #preprocess_image(images[i], show=True)
-        #detectEdges(images[i],i)
         img = images[i]
-        [xgrad, ygrad] =process_image(img, kernel)
-        xgrads.append(xgrad)
-        ygrads.append(ygrad)
-    return (xgrads, ygrads)
-    
-def process_image(img, kernel=13):
-    #gradients is a tuble of two images: xgrad and ygaad
-    imgEdit = preprocess_image(img, kernel = kernel)
-    gradients=calculateXYGradient(imgEdit, show=True)
-    return gradients
+        images_out[i] = preprocess_image(img, kernel = kernel)
+        edges = detectEdges(images_out[i],i)
+        allEdges.append(edges)
+
+
+
 
 def detectEdges(img, i):
+    """Uses canny to detect edges
+        inputs: img - already uploaded img, i - integer
+        output: edges of image"""
     threshold1 = 30
     threshold2 = threshold1*3 #ratio is 3:1 for higher to lower threshold
-    sobel = 3
+    sobel = 4
     gradient = True
     edges = cv2.Canny(img, threshold1, threshold2, sobel, L2gradient=gradient)
     canny_result = np.copy(img)
     canny_result[edges.astype(np.bool)]=0
     cv2.imshow('cannyresult'+str(i),cv2.resize(edges,(0,0), fx=.5, fy=.5))
+    return edges
 
+
+    
+def process_image(img, kernel=13):
+    """runs to process for imputting one image"""
+    #gradients is a tuble of two images: xgrad and ygaad
+    imgEdit = preprocess_image(img, kernel = kernel)
+    gradients=calculateXYGradient(imgEdit, show=True)
+    return gradients
+def preprocessImagesGradient(images):
+    xgrads = []
+    ygrads = []
+    for i in range(len(images)):
+        img = images[i]
+        [xgrad, ygrad] =process_image(img, kernel)
+        xgrads.append(xgrad)
+        ygrads.append(ygrad)
+    return (xgrads, ygrads)
 def calculateXYGradients(images, show=False):
     xGradientImages = []
     yGradientImages = []
