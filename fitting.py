@@ -21,6 +21,17 @@ def calculateXYGradients(images, show=False):
             cv2.waitKey(0)
     return xGradientImages, yGradientImages
 
+def calculateAllLandmarkNormals(allLandmarks):
+    #landmarks is a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data
+    allLandmarkNormals = np.zeros((allLandmarks.shape[0],allLandmarks.shape[1],allLandmarks.shape[2]))
+    #for each image
+    for i in range(allLandmarks.shape[0]):
+        #for each tooth
+        for j in range(allLandmarks.shape[1]):
+            #landmark normals for all landmarks in one shape (tooth j in image i)
+            allLandmarkNormals[i][j] = calculateLandmarkNormals(allLandmarks[i][j])
+    return allLandmarkNormals
+
 def calculateLandmarkNormals(shapeLandmarks):
     #shapeLandmarks is an  array containing interleaved x and y coordinates for all landmarks of one shape
     normals = []
@@ -191,3 +202,39 @@ def mahalanobisDistance(sample, mean, covarianceMatrix):
     difference = np.matrix(sample - mean)
     result = np.matrix.transpose(difference) * np.linalg.inv(covarianceMatrix) * difference
     return result
+    
+def buildAllGreyscaleModels(landmarks, nbOfSamplesPerSide, gradientGreyscaleImages):
+    #landmarks is a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data
+    if(len(gradientGreyscaleImages)!=landmarks.shape[0]):
+        print 'Landmarks do not correspond to images!'
+    #get the normals of all landmarks and put them in a structure similar to that of the landmarks
+    allLandmarkNormals = calculateAllLandmarkNormals(landmarks)
+    allModelCovarMatrices = []
+    allModelMeans = []
+    #for each tooth
+    for i in range(landmarks.shape[1]):
+        modelCovarMatricesForTooth = []
+        modelMeansForTooth = []
+        #for each landmark of this tooth
+        for j in range(landmarks.shape[2]/2):
+            modelLandmarks = []
+            modelLandmarkNormals = []
+            xIndex = 2*j
+            yIndex = 2*j+1
+            #for each image
+            for k in range(landmarks.shape[0]):
+                landmarkX = landmarks[k][i][xIndex]
+                landmarkY = landmarks[k][i][yIndex]
+                landmarkNormalX = allLandmarkNormals[k][i][xIndex]
+                landmarkNormalY = allLandmarkNormals[k][i][yIndex]
+                modelLandmarks.extend([landmarkX,landmarkY])
+                modelLandmarkNormals.extend([landmarkNormalX,landmarkNormalY])
+            #construct the greyscale model for landmark j in tooth i
+            modelCovarMatrix, modelMean = buildGreyscaleModel(modelLandmarks, modelLandmarkNormals, nbOfSamplesPerSide, gradientGreyscaleImages)
+            modelCovarMatricesForTooth.append(modelCovarMatrix)
+            modelMeansForTooth.append(modelMean)
+        allModelCovarMatrices.append(modelCovarMatricesForTooth)
+        allModelMeans.append(modelMeansForTooth)
+    #allModelCovarMatrices contains all model covariance matrices (one for each landmark) and has dimensions tooth X landmark
+    #allModelMeans contains all model means (one for each landmark) and has dimensions tooth X landmark
+    return allModelCovarMatrices, allModelMeans
