@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import math
+import importingAndPreprocessing as prep
 
 def calculateXYGradients(images, show=False):
     xGradientImages = []
@@ -238,3 +239,19 @@ def buildAllGreyscaleModels(landmarks, nbOfSamplesPerSide, gradientGreyscaleImag
     #allModelCovarMatrices contains all model covariance matrices (one for each landmark) and has dimensions tooth X landmark
     #allModelMeans contains all model means (one for each landmark) and has dimensions tooth X landmark
     return allModelCovarMatrices, allModelMeans
+    
+def calculateNewLandmarksForToothInImage(landmarks, nbOfSamplesPerSide, modelMeans, modelCovarMatrices, gradientGreyscaleImage):
+    #landmarks is an array of interleaved x and y coordinates for all landmarks of one tooth in one image
+    #modelMeans is an array of model means (one for each landmark)
+    #modelCovarMatrices is an array of model covariance matrices (one for each landmark)
+    #gradientGreyscaleImage is the image in which the previous variables were evaluated
+    landmarkNormals = calculateLandmarkNormals(landmarks)
+    newLandmarks = []
+    for i in range(len(landmarks)/2):
+        newLandmarkX, newLandmarkY = calculateNewLandmark(landmarks[2*i], landmarks[2*i+1], landmarkNormals[2*i], landmarkNormals[2*i+1], nbOfSamplesPerSide, modelMeans[i], modelCovarMatrices[i], gradientGreyscaleImage)
+        newLandmarks.extend([newLandmarkX,newLandmarkY])
+    #newLandmarks is an array of interleaved x and y coordinates for all new landmarks of this tooth in this image
+    return newLandmarks
+    
+if __name__ == '__main__':
+    landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)

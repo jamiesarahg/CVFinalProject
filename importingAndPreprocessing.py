@@ -69,9 +69,7 @@ def preprocess_all_images(images, kernel=13):
         images_out[i] = preprocess_image(img, kernel = kernel, show=True)
         edges = detectEdges(images_out[i],i)
         allEdges.append(edges)
-
-
-
+    return allEdges
 
 def detectEdges(img, i):
     """Uses canny to detect edges
