@@ -66,7 +66,7 @@ def preprocess_all_images(images, kernel=13):
     allEdges = []
     for i in range(len(images)):
         img = images[i]
-        images_out[i] = preprocess_image(img, kernel = kernel)
+        images_out[i] = preprocess_image(img, kernel = kernel, show=True)
         edges = detectEdges(images_out[i],i)
         allEdges.append(edges)
 
@@ -79,19 +79,20 @@ def detectEdges(img, i):
         output: edges of image"""
     threshold1 = 30
     threshold2 = threshold1*3 #ratio is 3:1 for higher to lower threshold
-    sobel = 4
+    sobel = 3
     gradient = True
     edges = cv2.Canny(img, threshold1, threshold2, sobel, L2gradient=gradient)
     canny_result = np.copy(img)
     canny_result[edges.astype(np.bool)]=0
-    cv2.imshow('cannyresult'+str(i),cv2.resize(edges,(0,0), fx=.5, fy=.5))
+    cv2.imshow('cannyresult'+str(i),cv2.resize(edges,(0,0), fx=.25, fy=.25))
+    cv2.waitKey(0)
     return edges
 
 
     
 def process_image(img, kernel=13):
     """runs to process for imputting one image"""
-    #gradients is a tuble of two images: xgrad and ygaad
+    #gradients is a tuple of two images: xgrad and ygaad
     imgEdit = preprocess_image(img, kernel = kernel)
     gradients=calculateXYGradient(imgEdit, show=True)
     return gradients
