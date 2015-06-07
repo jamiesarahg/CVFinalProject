@@ -99,10 +99,10 @@ def allPCA(alignedShapes):
                 
 
 if __name__ == '__main__':
-    landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)    
+    #landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)    
     #tests.show_landmarks_on_images('_Data/Radiographs', landmarks)
-    aligned = alignment.alignment(landmarks)
-    models = allPCA(aligned)
+    #aligned = alignment.alignment(landmarks)
+    #models = allPCA(aligned)
     #calcMean(landmarks)
     #toothSamples = tools.getLandmarksOfTooth(landmarks, 0)
     #weights = alignment.calculateLandmarkWeights(toothSamples)
@@ -115,5 +115,5 @@ if __name__ == '__main__':
     #prep.show_landmarks_on_images('_Data/Radiographs', landmarks)    
     #out = import_images('_Data/Radiographs')
     ##preprocess_all_images(out)
-    #images = prep.import_images('_Data/Radiographs', False)
-    #fitting.calculateXYGradients(images, True)
+    images = prep.import_images('_Data/Radiographs', False)
+    prep.calculateXYGradients(images, True)
