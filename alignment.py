@@ -53,7 +53,7 @@ def alignFirstToSecondTooth(tooth1, tooth2, weights=[1]*40):
     #inputs - tooth1 and tooth2 are landmark data from two different samples of the same tooth
     #weights - output of calculateLandmarkWeights function of the respective tooth
     #weights1 = [x/np.sum(weights) for x in weights]
-    #weights = weights1
+    #weights = 1
 
     xTooth1 = tooth1[0::2]
     yTooth1 = tooth1[1::2]
@@ -74,8 +74,7 @@ def alignFirstToSecondTooth(tooth1, tooth2, weights=[1]*40):
         c2 += weights[i] * ((yTooth1[i] * xTooth2[i]) - (xTooth1[i] * yTooth2[i]))
     w = np.sum(weights)
     w = 1
-    #print x2
-    #print y2
+
     a = np.array([[x2,(-y2),w,0],[y2,x2,0,w],[z,0,x2,y2],[0,z,(-y2),x2]])
     b = np.array([x1,y1,c1,c2])
     transformation = np.linalg.solve(a, b)
@@ -137,8 +136,8 @@ def alignmentIteration(landmarks, template, init = False):
             templateData = toothLandmarks[0]
         else:
             templateData = template[toothNum]
-        weights = calculateLandmarkWeights(toothLandmarks)
-        out = alignSetOf1Tooth(templateData,toothLandmarks, weights)
+        #weights = calculateLandmarkWeights(toothLandmarks)
+        out = alignSetOf1Tooth(templateData,toothLandmarks)
         transformations.append(out[1])
         
         for i in range(14):
@@ -187,13 +186,19 @@ def checkConvergence2(newLandmarks, oldLandmarks):
         for j in range(newLandmarks.shape[1]):
             for k in range(newLandmarks.shape[2]):
                 if abs(newLandmarks[i][j][k] - oldLandmarks[i][j][k]) > 10e-10:
+                    
                     #print newLandmarks
                     return False
+                print newLandmarks[i][j][k]
+                print oldLandmarks[i][j][k]
+                print (newLandmarks[i][j][k] - oldLandmarks[i][j][k])
     return True      
 def alignment(landmarks):
     '''top level alignment function. takees in landmark data and returns aligned landmark data'''
-    #oldLandmarks = landmarks
+    oldLandmarks = landmarks
     new = alignmentIteration(landmarks,None, init=True)
+
+    print oldLandmarks.shape
     newLandmark = new[0]
     mean = tools.calcMean(newLandmark)
     normalized = normalize(mean, landmarks[0])
