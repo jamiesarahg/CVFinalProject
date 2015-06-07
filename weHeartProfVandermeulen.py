@@ -67,8 +67,8 @@ def PCA(alignedShape, cutOffValue=None):
             totalPercentageExplainedVariance = 0
             for i in range(len(eigenValues)):
                 additionalPercentageExplainedVariance = eigenValues[i]/totalVariance
-                totalPercentageExplainedVariance += additionalPercentageExplainedVariance
-                print 'Principal component nb ' + str(i+1) + ' explains ' + str(additionalPercentageExplainedVariance) + '% out of ' + str(totalPercentageExplainedVariance) + '% of the variance explained up until now'
+                totalPercentageExplainedVariance = totalPercentageExplainedVariance+  additionalPercentageExplainedVariance
+                print 'Principal component nb ' + str(i+1) + ' explains ' + str(additionalPercentageExplainedVariance*100) + '% out of ' + str(totalPercentageExplainedVariance*100) + '% of the variance explained up until now'
             keyBoardInput = int(input("What would you like the last principal component to be? Please insert its number!"))
             if keyBoardInput < 1 or keyBoardInput > lastPrincipalComponent:
                 print 'Invalid number, all principal components will be returned!'
