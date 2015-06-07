@@ -117,7 +117,7 @@ def pointsToPixels(points):
 def buildGreyscaleModel(landmarks, landmarkNormals, nbOfSamplesPerSide, gradientGreyscaleImages):
     #gradientGreyscaleImages is an array of all the images, after being converted into a gradient greyscale, in the training set
     #landmarks (and corresponding landmarkNormals) is an array of interleaved x and y coordinates for the same landmark across all these images
-    #pixels is an array (with size equal to landmarks/landmarkNormals/gradientGreyscaleImages) of arrays of interleaved x and y coordinates for the corresponding pixel set
+    #pixels is an array (with size equal to gradientGreyscaleImages) of arrays of interleaved x and y coordinates for the corresponding pixel set
     pixels = []
     for i in range(len(gradientGreyscaleImages)):
         x = 2*i
@@ -149,4 +149,45 @@ def buildGreyscaleModel(landmarks, landmarkNormals, nbOfSamplesPerSide, gradient
     covarianceMatrix = covarianceMatrix/len(gradientGreyscaleImages)
     return covarianceMatrix, meanPixelValues
     
-def calculateNewLandmark(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, nbOfSamplesPerSide, gradientGreyscaleImages)
+def calculateNewLandmark(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, nbOfSamplesPerSide, modelMean, modelCovarMatrix, gradientGreyscaleImage):
+    m = nbOfSamplesPerSide
+    k = (len(modelMean)-1)/2
+    if(m <= k):
+        print 'M is not larger than k!!'
+    #retrieve the pixelcoordinates for all the necessary pixels on the landmark normal (= 2*m + 1 pixels)
+    points = pointsOnLandmarkNormal(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, m)
+    allPixels = pointsToPixels(points)
+    allPixelValues = []
+    #retrieve the pixelvalues for all pixels
+    for i in range(len(allPixels)/2):
+        pixelValue = gradientGreyscaleImage[allPixels[2*i]][allPixels[2*i+1]]
+        allPixelValues.append(pixelValue)
+    #construct 2*(m-k)+1 samples to compare to the greyscale model
+    fitValues = []
+    for i in range(2*(m-k)+1):
+        sample = []
+        absoluteSum = 0
+        for j in range(2*k+1):
+            pixelValue = allPixelValues[i+j]
+            sample.append(pixelValue)
+            absoluteSum += abs(pixelValue)
+        sample = np.array(sample) / absoluteSum
+    #compare sample to greyscale model
+        fitMeasure = mahalanobisDistance(sample, modelMean, modelCovarMatrix)
+        fitValues.append(fitMeasure)
+    #get index of best fitting point (smallest fit value)
+    sortedFitIndices = fitValues.argsort()
+    indexOfBestPixel = sortedFitIndices[0] + k
+    #get pixelcoordinates of best fitting point
+    pixelXIndex = 2*indexOfBestPixel
+    pixelYIndex = pixelXIndex + 1
+    return allPixels[pixelXIndex], allPixels[pixelYIndex]
+    
+def mahalanobisDistance(sample, mean, covarianceMatrix):
+    d = len(sample)
+    d1, d2 = covarianceMatrix.shape
+    if(len(mean)!=d or d1!=d or d2!=d):
+        print 'Dimensions are incorrect!'
+    difference = np.matrix(sample - mean)
+    result = np.matrix.transpose(difference) * np.linalg.inv(covarianceMatrix) * difference
+    return result
