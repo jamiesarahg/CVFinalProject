@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import math
 import importingAndPreprocessing as prep
+import tests
 
 def calculateAllLandmarkNormals(allLandmarks):
     #landmarks is a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data
@@ -13,6 +14,25 @@ def calculateAllLandmarkNormals(allLandmarks):
             #landmark normals for all landmarks in one shape (tooth j in image i)
             allLandmarkNormals[i][j] = calculateLandmarkNormals(allLandmarks[i][j])
     return allLandmarkNormals
+
+def plotLandmarksAndNormals(landmarks, landmarkNormals, normalScale, images, show=False):
+    #for each image
+    for k in range(landmarks.shape[0]):
+        #for each tooth
+        for i in range(landmarks.shape[1]):
+            #for each landmark of this tooth
+            for j in range(landmarks.shape[2]/2):
+                xLandmark = landmarks[k][i][2*j]
+                yLandmark = landmarks[k][i][2*j+1]
+                cv2.circle(images[k],(int(xLandmark),int(yLandmark)),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
+                nx = xLandmark + normalScale*landmarkNormals[k][i][2*j]
+                ny = yLandmark + normalScale*landmarkNormals[k][i][2*j+1]
+                cv2.line(images[k], (int(xLandmark),int(yLandmark)), (int(nx),int(ny)), cv2.cv.CV_RGB(255, 0, 0), 1)
+        if show:
+            cv2.imshow('plottedLandmarksAndNormals',cv2.resize(images[k], (0,0), fx=0.5, fy=0.5))
+            cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    return images
 
 def calculateLandmarkNormals(shapeLandmarks):
     #shapeLandmarks is an  array containing interleaved x and y coordinates for all landmarks of one shape
@@ -44,32 +64,26 @@ def calculateLandmarkNormal(prevX, prevY, centerX, centerY, nextX, nextY):
     #calculate the first surface normal
     n1x, n1y = calculatePerpendicularVector(prevVectorX, prevVectorY)
     #make sure this surface normal is pointing outwards
-    if(crossProductPositive(prevVectorX, prevVectorY, n1x, n1y) is True):
+    if(crossProductZ(prevVectorX, prevVectorY, n1x, n1y) > 0):
         n1x = -n1x
         n1y = -n1y
     #normalize this surface normal
-    n1length = lengthOfVector(n1x, n1y)
-    n1x = n1x / n1length
-    n1y = n1y / n1length
+    n1x, n1y = normalizeVector(n1x, n1y)
     #calculate the second surface vector
     nextVectorX = nextX-centerX
     nextVectorY = nextY-centerY
     #calculate the second surface normal
     n2x, n2y = calculatePerpendicularVector(nextVectorX, nextVectorY)
     #make sure this surface normal is pointing outwards
-    if(crossProductPositive(nextVectorX, nextVectorY, n2x, n2y) is False):
+    if(crossProductZ(nextVectorX, nextVectorY, n2x, n2y) < 0):
         n2x = -n2x
         n2y = -n2y
     #normalize this surface normal
-    n2length = lengthOfVector(n2x, n2y)
-    n2x = n2x / n2length
-    n2y = n2y / n2length
+    n2x, n2y = normalizeVector(n2x, n2y)
     #the required landmark normal is just the sum of the two calculated surface normals
     normalX = n1x + n2x
     normalY = n1y + n2y
-    normalLength = lengthOfVector(normalX, normalY)
-    normalX = normalX / normalLength
-    normalY = normalY / normalLength
+    normalX, normalY = normalizeVector(normalX, normalY)
     return normalX, normalY
     
 def calculatePerpendicularVector(vectorX, vectorY):
@@ -77,12 +91,19 @@ def calculatePerpendicularVector(vectorX, vectorY):
     normalY = vectorX
     return normalX, normalY
     
+def normalizeVector(vectorX, vectorY):
+    length = lengthOfVector(vectorX, vectorY)
+    normalizedX = vectorX/length
+    normalizedY = vectorY/length
+    return normalizedX, normalizedY
+    
 def lengthOfVector(vectorX, vectorY):
     length = math.sqrt((vectorX*vectorX) + (vectorY*vectorY))
     return length
     
-def crossProductPositive(vector1X, vector1Y, vector2X, vector2Y):
-    return ((vector1X*vector2Y) - (vector1Y*vector2X)) > 0
+def crossProductZ(vector1X, vector1Y, vector2X, vector2Y):
+    z = (vector1X*vector2Y) - (vector1Y*vector2X)
+    return z
     
 def pointsOnLandmarkNormal(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, nbOfPointsPerSide):
     #returns an ordered array containing interleaved x and y coordinates for all desired points on the landmark normal (on both sides of the surface)
@@ -105,7 +126,6 @@ def pointsToPixels(points):
     pixels = []
     for i in range(len(points)/2):
         pixelX = round(points[2*i])
-        print pixelX
         pixelX = int(pixelX)
         pixelY = round(points[2*i+1])
         pixelY = int(pixelY)
@@ -135,7 +155,10 @@ def buildDerivativeGrayscaleModel(landmarks, landmarkNormals, nbOfSamplesPerSide
     for i in range(len(grayscaleImages)):
         pixelValues = []
         for j in range(len(allPixels[0])/2):
-            pixelValue = grayscaleImages[i][allPixels[i][2*j]][allPixels[i][2*j+1]]
+            pixelX = allPixels[i][2*j]
+            pixelY = allPixels[i][2*j+1]
+            img = grayscaleImages[i]
+            pixelValue = img[pixelX][pixelY]
             pixelValues.append(pixelValue)
         derivativeValues = calculateDerivatives(pixelValues)
         derivativeValues = np.array(derivativeValues) / np.sum(derivativeValues)
@@ -314,8 +337,11 @@ def calculateNewLandmarksForToothInImage(landmarks, nbOfSamplesPerSide, modelMea
     return newLandmarks
     
 if __name__ == '__main__':
-    landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)
+    landmarks = prep.load_landmark_data('_Data/Landmarks/original', 14)
     images = prep.import_images('_Data/Radiographs', False)
     prepImages = prep.preprocess_all_images(images, False)
     #prepImages = prep.convertImagesToGrayscale(prepImages, True)
-    buildAllGreyscaleModels(landmarks, 5, prepImages)
+    #buildAllGreyscaleModels(landmarks, 1, prepImages)
+    landmarkNormals = calculateAllLandmarkNormals(landmarks)
+    plotLandmarksAndNormals(landmarks, landmarkNormals, 10, images, True)
+    #tests.show_landmarks_on_images('_Data/Radiographs', landmarks)
