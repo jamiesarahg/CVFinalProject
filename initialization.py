@@ -53,40 +53,43 @@ def initialization(landmarks):
     showAvePosition(avePositionsX, avePositionsY)
 
 def manualInitialization(img):
+    """
+    This function allows for manual Initialization. 
+    Input: a cv loaded image
+    outputs: a list of eight points corresponding to the points that the user clicks
     
+    This function will display the image that is inputted into the function and the use should then click each of the eight teeth, starting on the top left and then going clockwise (WE CAN CHANGE THAT WHEN WE FIGURE OUT THE TEETH ORDER
+    The function will then draw a circle on the place which was clicked.
+    After eight clicks, the image will exit and the list of points will be returned
+    """
     #mouse callback function
-    global ix, iy, points
-    ix, iy = 0,0
-    jx, jy = 0,0
+    global points #declaring these variables as global so they can be accessed in both draw_circle and this function
     points = []
     def draw_circle(event,x,y,flags,param):
-        print 'in function!!'
-        if event==cv2.EVENT_LBUTTONDBLCLK:
-            cv2.circle(img,(x,y),1,cv2.cv.CV_RGB(255, 255, 255),-1 )
-            #points.append(x,y)
-            ix,iy = x, y
-
-            print 'ix',ix
-            print 'iy',iy
+        
+        if event==cv2.EVENT_LBUTTONDOWN: #
+            
+            #draws a circle on the image at the point x,y which was recorded from the event
+            cv2.circle(img,(x*2,y*2),5,cv2.cv.CV_RGB(255, 255, 255),-1 )
+           
+           #for debugging 
+            print 'x',x
+            print 'y',y
             print points
-            points.append((ix, iy))
+            points.append((x*2, y*2)) #Must multiply by two because imaged is resized by .5Som
+            
     #Create a window and bind the function to the window
     cv2.namedWindow("image")
+    #Setting draw_circle to be the function run when the mouse is clicked
     cv2.setMouseCallback("image",draw_circle)
     
-    while(len(points)<8):
-        cv2.imshow("image", cv2.resize(img, (0,0), fx=0.5, fy=0.5))
-        if jx != ix: #or jy != iy:
-            points.append((ix, iy))
-            print points
-        jx = ix
-        jy = iy
-        
-        if cv.WaitKey(15)%0x100==27:break	
+    while(len(points)<8): #Checks to see if points is less than eight sets of coordinates long
+        cv2.imshow("image", cv2.resize(img, (0,0), fx=0.5, fy=0.5))        
+        if cv.WaitKey(15)%0x100==27:break	#If escape key is pressed breaks from loop
     
     cv2.destroyAllWindows()
-    print points
-    return points
+    print points #print for debugging
+    return points #returns list of coordinates
 
     
 if __name__ == '__main__':
