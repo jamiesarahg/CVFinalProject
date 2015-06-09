@@ -83,13 +83,11 @@ def manualInitialization(img):
         jy = iy
         
         if cv.WaitKey(15)%0x100==27:break	
-    print points
-    cv2.destroyAllWindows()
     
-    #initPoints = []
-    #for i in range(8):
-    #    cv2.imshow('Pick init for tooth '+i, cv2.resize(img, (0,0), fx=0.25, fy=0.25))
-    #    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    print points
+    return points
+
     
 if __name__ == '__main__':
     
