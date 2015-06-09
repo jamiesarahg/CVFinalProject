@@ -21,11 +21,20 @@ def import_images(directory, show=False):
         function loads all images in directory into the list"""
     #load images into images array
     images = []
+    
     count=0
     for filename in fnmatch.filter(os.listdir(directory),'*.tif'):
         file_in = directory+"/"+filename
+
         images.append(cv2.imread(file_in,0))
         count+=1
+    for filename in fnmatch.filter(os.listdir(directory),'*.tif'):
+        file_in = directory+"/"+filename
+        filenum = filename[:-2]
+        filenum1=filenum[:-2]
+        images[int(filenum1)-1]=cv2.imread(file_in,0)
+        count+=1
+    
     if show:
         for img in images:
             cv2.imshow('img',cv2.resize(img, (0,0), fx=0.25, fy=0.25))
@@ -150,4 +159,4 @@ def calculateXYGradient(img, show=False):
 
 if __name__ == '__main__':
     out = import_images('_Data/Radiographs')
-    preprocess_all_images(out)
+    #preprocess_all_images(out)

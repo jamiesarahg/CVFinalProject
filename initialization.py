@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import cv
 
 import importingAndPreprocessing as prep
 import tools
@@ -50,8 +51,50 @@ def initialization(landmarks):
         avePositionsY.append(avePositionToothY)
     
     showAvePosition(avePositionsX, avePositionsY)
+
+def manualInitialization(img):
+    
+    #mouse callback function
+    global ix, iy, points
+    ix, iy = 0,0
+    jx, jy = 0,0
+    points = []
+    def draw_circle(event,x,y,flags,param):
+        if event==cv2.EVENT_LBUTTONDBLCLK:
+            cv2.circle(img,(x,y),1,cv2.cv.CV_RGB(255, 255, 255),-1 )
+            #points.append(x,y)
+            ix,iy = x, y
+
+            print 'ix',ix
+            print 'iy',iy
+            print points
+            points.append((ix, iy))
+    #Create a window and bind the function to the window
+    cv2.namedWindow("image")
+    cv2.setMouseCallback("image",draw_circle)
+    
+    while(len(points)<8):
+        cv2.imshow("image",img)# cv2.resize(img, (0,0), fx=0.25, fy=0.25)
+        if jx != ix: #or jy != iy:
+            points.append((ix, iy))
+            print points
+        jx = ix
+        jy = iy
         
+        if cv.WaitKey(15)%0x100==27:break	
+    print points
+    cv2.destroyAllWindows()
+    
+    #initPoints = []
+    #for i in range(8):
+    #    cv2.imshow('Pick init for tooth '+i, cv2.resize(img, (0,0), fx=0.25, fy=0.25))
+    #    cv2.waitKey(0)
     
 if __name__ == '__main__':
-    landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)
-    initialization(landmarks)
+    
+    imgs = prep.import_images('_Data/Radiographs', show=False)
+    
+    manualInitialization(imgs[0])
+    
+    #landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)
+    #initialization(landmarks)
