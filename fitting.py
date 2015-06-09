@@ -24,15 +24,32 @@ def plotLandmarksAndNormals(landmarks, landmarkNormals, normalScale, images, sho
             for j in range(landmarks.shape[2]/2):
                 xLandmark = landmarks[k][i][2*j]
                 yLandmark = landmarks[k][i][2*j+1]
-                cv2.circle(images[k],(int(xLandmark),int(yLandmark)),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
-                nx = xLandmark + normalScale*landmarkNormals[k][i][2*j]
-                ny = yLandmark + normalScale*landmarkNormals[k][i][2*j+1]
-                cv2.line(images[k], (int(xLandmark),int(yLandmark)), (int(nx),int(ny)), cv2.cv.CV_RGB(255, 0, 0), 1)
+                xNormal = landmarkNormals[k][i][2*j]
+                yNormal = landmarkNormals[k][i][2*j+1]
+                images[k] = plotLandmarkAndNormal(xLandmark, yLandmark, xNormal, yNormal, normalScale, images[k], False)
         if show:
             cv2.imshow('plottedLandmarksAndNormals',cv2.resize(images[k], (0,0), fx=0.5, fy=0.5))
             cv2.waitKey(0)
     cv2.destroyAllWindows()
     return images
+    
+def plotLandmarkAndNormal(xLandmark, yLandmark, xNormal, yNormal, normalScale, image, show=False):
+    cv2.circle(image,(int(xLandmark),int(yLandmark)),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
+    nx = xLandmark + normalScale*xNormal
+    ny = yLandmark + normalScale*yNormal
+    cv2.line(image, (int(xLandmark),int(yLandmark)), (int(nx),int(ny)), cv2.cv.CV_RGB(255, 0, 0), 1)
+    if show:
+        cv2.imshow('plottedLandmarkAndNormal',cv2.resize(image, (0,0), fx=0.5, fy=0.5))
+        cv2.waitKey(0)
+    return image
+    
+def plotPixels(pixels, image, show=False):
+    for i in range(len(pixels)/2):
+        cv2.circle(image,(int(pixels[2*i]),int(pixels[2*i+1])),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
+    if show:        
+        cv2.imshow('plottedPixels',cv2.resize(image, (0,0), fx=0.5, fy=0.5))
+        cv2.waitKey(0)
+    return image
 
 def calculateLandmarkNormals(shapeLandmarks):
     #shapeLandmarks is an  array containing interleaved x and y coordinates for all landmarks of one shape
@@ -125,21 +142,38 @@ def pointsToPixels(points):
     #points is an array containing interleaved x and y coordinates for all points for which the pixel coordinates are returned (in the same order)
     pixels = []
     for i in range(len(points)/2):
-        pixelX = round(points[2*i])
-        pixelX = int(pixelX)
-        pixelY = round(points[2*i+1])
-        pixelY = int(pixelY)
+        pixelX = int(round(points[2*i]))
+        pixelY = int(round(points[2*i+1]))
         pixels.extend([pixelX, pixelY])
     return pixels
     
 def calculateDerivatives(pixelValues):
     derivativeValues = []
     for i in range(len(pixelValues)-1):
-        derivative = pixelValues[i+1] - pixelValues[i]
+        if(pixelValues[i+1] >= pixelValues[i]):
+            derivative = int(pixelValues[i+1] - pixelValues[i])
+        else:
+            derivative = -int((pixelValues[i] - pixelValues[i+1]))
         derivativeValues.append(derivative)
     return derivativeValues
     
-def buildDerivativeGrayscaleModel(landmarks, landmarkNormals, nbOfSamplesPerSide, grayscaleImages):
+def normalizeValues(values):
+    total = absoluteSum(values)
+    if (total == 0):
+        total = 1
+    newValues = []
+    for value in values:
+        newValue = value / total
+        newValues.append(newValue)
+    return newValues
+    
+def absoluteSum(values):
+    total = 0
+    for value in values:
+        total += abs(value)
+    return total
+    
+def buildDerivativeGrayscaleModel(landmarks, landmarkNormals, nbOfSamplesPerSide, grayscaleImages, plotPoints=False):
     #gradientGreyscaleImages is an array of all the images, after being converted into a gradient greyscale, in the training set
     #landmarks (and corresponding landmarkNormals) is an array of interleaved x and y coordinates for the same landmark across all these images
     #pixels is an array (with size equal to gradientGreyscaleImages) of arrays of interleaved x and y coordinates for the corresponding pixel set
@@ -154,14 +188,16 @@ def buildDerivativeGrayscaleModel(landmarks, landmarkNormals, nbOfSamplesPerSide
     totalDerivativeValues = []
     for i in range(len(grayscaleImages)):
         pixelValues = []
+        img = grayscaleImages[i]
         for j in range(len(allPixels[0])/2):
             pixelX = allPixels[i][2*j]
             pixelY = allPixels[i][2*j+1]
-            img = grayscaleImages[i]
-            pixelValue = img[pixelX][pixelY]
+            pixelValue = img[pixelY][pixelX]
             pixelValues.append(pixelValue)
+        if plotPoints:
+            plotPixels(allPixels[i], grayscaleImages[i])
         derivativeValues = calculateDerivatives(pixelValues)
-        derivativeValues = np.array(derivativeValues) / np.sum(derivativeValues)
+        derivativeValues = normalizeValues(derivativeValues)
         totalDerivativeValues.append(derivativeValues)
     #calculate mean array
     meanDerivativeValues = np.zeros(len(totalDerivativeValues[0]))
@@ -176,40 +212,50 @@ def buildDerivativeGrayscaleModel(landmarks, landmarkNormals, nbOfSamplesPerSide
     covarianceMatrix = covarianceMatrix/len(grayscaleImages)
     return covarianceMatrix, meanDerivativeValues
     
-def buildRegularGrayscaleModel(landmarks, landmarkNormals, nbOfSamplesPerSide, gradientGrayscaleImages):
-    #gradientGreyscaleImages is an array of all the images, after being converted into a gradient greyscale, in the training set
-    #landmarks (and corresponding landmarkNormals) is an array of interleaved x and y coordinates for the same landmark across all these images
-    #pixels is an array (with size equal to gradientGreyscaleImages) of arrays of interleaved x and y coordinates for the corresponding pixel set
-    allPixels = []
-    for i in range(len(gradientGrayscaleImages)):
-        x = 2*i
-        y = 2*i+1
-        points = pointsOnLandmarkNormal(landmarks[x], landmarks[y], landmarkNormals[x], landmarkNormals[y], nbOfSamplesPerSide)
-        pixels = pointsToPixels(points)
-        allPixels.append(pixels)
-    #retrieve the value for each pixelset per image and store it in a (image X pixelvalues) array
-    totalPixelValues = []
-    for i in len(gradientGrayscaleImages):
-        pixelValues = []
-        absoluteSum = 0
-        for j in range(len(pixels[0])/2):
-            pixelValue = gradientGrayscaleImages[i][allPixels[i][2*j]][allPixels[i][2*j+1]]
-            pixelValues.append(pixelValue)
-            absoluteSum += abs(pixelValue)
-        pixelValues = np.array(pixelValues) / absoluteSum
-        totalPixelValues.append(pixelValues)
-    #calculate mean array
-    meanPixelValues = np.zeros(len(pixelValues[0]))
-    for pixelValueArray in totalPixelValues:
-        meanPixelValues += pixelValueArray
-    meanPixelValues = meanPixelValues / len(gradientGrayscaleImages)
-    #calculate covariance matrix
-    covarianceMatrix = np.matrix(np.zeros((len(meanPixelValues),len(meanPixelValues))))
-    for i in range(len(gradientGrayscaleImages)):
-        deviation = totalPixelValues[i] - meanPixelValues
-        covarianceMatrix = np.add(covarianceMatrix, np.matrix(np.outer(deviation,deviation)))
-    covarianceMatrix = covarianceMatrix/len(gradientGrayscaleImages)
-    return covarianceMatrix, meanPixelValues
+def buildAllGreyscaleModels(landmarks, nbOfSamplesPerSide, gradientGrayscaleImages, showPoints=False):
+    #landmarks is a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data
+    if(len(gradientGrayscaleImages)!=landmarks.shape[0]):
+        print 'Landmarks do not correspond to images!'
+    #get the normals of all landmarks and put them in a structure similar to that of the landmarks
+    allLandmarkNormals = calculateAllLandmarkNormals(landmarks)
+    allModelCovarMatrices = []
+    allModelMeans = []
+    #for each tooth
+    for i in range(landmarks.shape[1]):
+        modelCovarMatricesForTooth = []
+        modelMeansForTooth = []
+        #print ' '
+        #print 'tooth '+str(i+1)+'/'+str(landmarks.shape[1])
+        #print ' '
+        #for each landmark of this tooth
+        for j in range(landmarks.shape[2]/2):
+            modelLandmarks = []
+            modelLandmarkNormals = []
+            xIndex = 2*j
+            yIndex = 2*j+1
+            #for each image
+            for k in range(landmarks.shape[0]):
+                landmarkX = landmarks[k][i][xIndex]
+                landmarkY = landmarks[k][i][yIndex]
+                landmarkNormalX = allLandmarkNormals[k][i][xIndex]
+                landmarkNormalY = allLandmarkNormals[k][i][yIndex]
+                modelLandmarks.extend([landmarkX,landmarkY])
+                modelLandmarkNormals.extend([landmarkNormalX,landmarkNormalY])
+            #construct the greyscale model for landmark j in tooth i
+            #print 'model '+str(j+1)+'/'+str(landmarks.shape[2]/2)
+            modelCovarMatrix, modelMean = buildDerivativeGrayscaleModel(modelLandmarks, modelLandmarkNormals, nbOfSamplesPerSide, gradientGrayscaleImages, showPoints)
+            modelCovarMatricesForTooth.append(modelCovarMatrix)
+            modelMeansForTooth.append(modelMean)
+        allModelCovarMatrices.append(modelCovarMatricesForTooth)
+        allModelMeans.append(modelMeansForTooth)
+    if showPoints:
+        for img in gradientGrayscaleImages:
+            cv2.imshow('grayscaleModelSamples',cv2.resize(img, (0,0), fx=0.5, fy=0.5))
+            cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    #allModelCovarMatrices is a two dimentional array of the teeth, each with the landmark covariance matrices (across all images)
+    #allModelMeans is a two dimentional array of the teeth, each with the landmark means (across all images)
+    return allModelCovarMatrices, allModelMeans
     
 def calculateNewLandmarkWithDerivativeGrayscaleModel(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, nbOfSamplesPerSide, modelMean, modelCovarMatrix, grayscaleImage):
     m = nbOfSamplesPerSide
@@ -222,7 +268,9 @@ def calculateNewLandmarkWithDerivativeGrayscaleModel(landmarkX, landmarkY, landm
     allPixelValues = []
     #retrieve the pixelvalues for all pixels
     for i in range(len(allPixels)/2):
-        pixelValue = grayscaleImage[allPixels[2*i]][allPixels[2*i+1]]
+        pixelX = allPixels[2*i]
+        pixelY = allPixels[2*i+1]
+        pixelValue = grayscaleImage[pixelY][pixelX]
         allPixelValues.append(pixelValue)
     #retrieve the derivatives for all pixelvalues
     allDerivativeValues = calculateDerivatives(allPixelValues)
@@ -230,43 +278,9 @@ def calculateNewLandmarkWithDerivativeGrayscaleModel(landmarkX, landmarkY, landm
     fitValues = []
     for i in range(2*(m-k)+1):
         sampleDerivatives = allDerivativeValues[i:(i+2*k)]
-        sampleDerivatives = np.array(sampleDerivatives) / np.sum(sampleDerivatives)
+        sampleDerivatives = normalizeValues(sampleDerivatives)
         #compare sample to greyscale model
         fitMeasure = mahalanobisDistance(sampleDerivatives, modelMean, modelCovarMatrix)
-        fitValues.append(fitMeasure)
-    #get index of best fitting point (smallest fit value)
-    sortedFitIndices = fitValues.argsort()
-    indexOfBestPixel = sortedFitIndices[0] + k
-    #get pixelcoordinates of best fitting point
-    pixelXIndex = 2*indexOfBestPixel
-    pixelYIndex = pixelXIndex + 1
-    return allPixels[pixelXIndex], allPixels[pixelYIndex]
-    
-def calculateNewLandmarkWithRegularGrayscaleModel(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, nbOfSamplesPerSide, modelMean, modelCovarMatrix, gradientGrayscaleImage):
-    m = nbOfSamplesPerSide
-    k = (len(modelMean)-1)/2
-    if(m <= k):
-        print 'M is not larger than k!!'
-    #retrieve the pixelcoordinates for all the necessary pixels on the landmark normal (= 2*m + 1 pixels)
-    points = pointsOnLandmarkNormal(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, m)
-    allPixels = pointsToPixels(points)
-    allPixelValues = []
-    #retrieve the pixelvalues for all pixels
-    for i in range(len(allPixels)/2):
-        pixelValue = gradientGrayscaleImage[allPixels[2*i]][allPixels[2*i+1]]
-        allPixelValues.append(pixelValue)
-    #construct 2*(m-k)+1 samples to compare to the greyscale model
-    fitValues = []
-    for i in range(2*(m-k)+1):
-        sample = []
-        absoluteSum = 0
-        for j in range(2*k+1):
-            pixelValue = allPixelValues[i+j]
-            sample.append(pixelValue)
-            absoluteSum += abs(pixelValue)
-        sample = np.array(sample) / absoluteSum
-        #compare sample to greyscale model
-        fitMeasure = mahalanobisDistance(sample, modelMean, modelCovarMatrix)
         fitValues.append(fitMeasure)
     #get index of best fitting point (smallest fit value)
     sortedFitIndices = fitValues.argsort()
@@ -285,43 +299,6 @@ def mahalanobisDistance(sample, mean, covarianceMatrix):
     result = np.matrix.transpose(difference) * np.linalg.inv(covarianceMatrix) * difference
     return result
     
-def buildAllGreyscaleModels(landmarks, nbOfSamplesPerSide, gradientGrayscaleImages):
-    #landmarks is a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data
-    if(len(gradientGrayscaleImages)!=landmarks.shape[0]):
-        print 'Landmarks do not correspond to images!'
-    #get the normals of all landmarks and put them in a structure similar to that of the landmarks
-    allLandmarkNormals = calculateAllLandmarkNormals(landmarks)
-    allModelCovarMatrices = []
-    allModelMeans = []
-    #for each tooth
-    for i in range(landmarks.shape[1]):
-        modelCovarMatricesForTooth = []
-        modelMeansForTooth = []
-        #for each landmark of this tooth
-        for j in range(landmarks.shape[2]/2):
-            modelLandmarks = []
-            modelLandmarkNormals = []
-            xIndex = 2*j
-            yIndex = 2*j+1
-            #for each image
-            for k in range(landmarks.shape[0]):
-                landmarkX = landmarks[k][i][xIndex]
-                landmarkY = landmarks[k][i][yIndex]
-                landmarkNormalX = allLandmarkNormals[k][i][xIndex]
-                landmarkNormalY = allLandmarkNormals[k][i][yIndex]
-                modelLandmarks.extend([landmarkX,landmarkY])
-                modelLandmarkNormals.extend([landmarkNormalX,landmarkNormalY])
-            #construct the greyscale model for landmark j in tooth i
-            """modelCovarMatrix, modelMean = buildRegularGrayscaleModel(modelLandmarks, modelLandmarkNormals, nbOfSamplesPerSide, gradientGrayscaleImages)"""
-            modelCovarMatrix, modelMean = buildDerivativeGrayscaleModel(modelLandmarks, modelLandmarkNormals, nbOfSamplesPerSide, gradientGrayscaleImages)
-            modelCovarMatricesForTooth.append(modelCovarMatrix)
-            modelMeansForTooth.append(modelMean)
-        allModelCovarMatrices.append(modelCovarMatricesForTooth)
-        allModelMeans.append(modelMeansForTooth)
-    #allModelCovarMatrices contains all model covariance matrices (one for each landmark) and has dimensions tooth X landmark
-    #allModelMeans contains all model means (one for each landmark) and has dimensions tooth X landmark
-    return allModelCovarMatrices, allModelMeans
-    
 def calculateNewLandmarksForToothInImage(landmarks, nbOfSamplesPerSide, modelMeans, modelCovarMatrices, gradientGreyscaleImage):
     #landmarks is an array of interleaved x and y coordinates for all landmarks of one tooth in one image
     #modelMeans is an array of model means (one for each landmark)
@@ -330,7 +307,6 @@ def calculateNewLandmarksForToothInImage(landmarks, nbOfSamplesPerSide, modelMea
     landmarkNormals = calculateLandmarkNormals(landmarks)
     newLandmarks = []
     for i in range(len(landmarks)/2):
-        """newLandmarkX, newLandmarkY = calculateNewLandmarkWithRegularGrayscaleModel(landmarks[2*i], landmarks[2*i+1], landmarkNormals[2*i], landmarkNormals[2*i+1], nbOfSamplesPerSide, modelMeans[i], modelCovarMatrices[i], gradientGreyscaleImage)"""
         newLandmarkX, newLandmarkY = calculateNewLandmarkWithDerivativeGrayscaleModel(landmarks[2*i], landmarks[2*i+1], landmarkNormals[2*i], landmarkNormals[2*i+1], nbOfSamplesPerSide, modelMeans[i], modelCovarMatrices[i], gradientGreyscaleImage)
         newLandmarks.extend([newLandmarkX,newLandmarkY])
     #newLandmarks is an array of interleaved x and y coordinates for all new landmarks of this tooth in this image
@@ -341,7 +317,7 @@ if __name__ == '__main__':
     images = prep.import_images('_Data/Radiographs', False)
     prepImages = prep.preprocess_all_images(images, False)
     #prepImages = prep.convertImagesToGrayscale(prepImages, True)
-    #buildAllGreyscaleModels(landmarks, 1, prepImages)
+    buildAllGreyscaleModels(landmarks, 10, prepImages, False)
     landmarkNormals = calculateAllLandmarkNormals(landmarks)
-    plotLandmarksAndNormals(landmarks, landmarkNormals, 10, images, True)
+    #plotLandmarksAndNormals(landmarks, landmarkNormals, 10, prepImages, True)
     #tests.show_landmarks_on_images('_Data/Radiographs', landmarks)
