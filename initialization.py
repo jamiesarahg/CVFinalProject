@@ -60,6 +60,7 @@ def manualInitialization(img):
     jx, jy = 0,0
     points = []
     def draw_circle(event,x,y,flags,param):
+        print 'in function!!'
         if event==cv2.EVENT_LBUTTONDBLCLK:
             cv2.circle(img,(x,y),1,cv2.cv.CV_RGB(255, 255, 255),-1 )
             #points.append(x,y)
@@ -74,7 +75,7 @@ def manualInitialization(img):
     cv2.setMouseCallback("image",draw_circle)
     
     while(len(points)<8):
-        cv2.imshow("image",img)# cv2.resize(img, (0,0), fx=0.25, fy=0.25)
+        cv2.imshow("image", cv2.resize(img, (0,0), fx=0.5, fy=0.5))
         if jx != ix: #or jy != iy:
             points.append((ix, iy))
             print points

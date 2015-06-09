@@ -8,7 +8,7 @@ import collections
  
 import tests
 import tools
-
+import importingAndPreprocessing as prep
 
 
 def calculateLandmarkWeights(toothSamples):
@@ -224,3 +224,10 @@ def alignment(landmarks):
     return newLandmark
     #tests.show_landmarks_on_images('_Data/Radiographs/', newLandmark)
     
+if __name__ == '__main__':
+    landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)    
+    #tests.show_landmarks_on_images('_Data/Radiographs', landmarks)
+    aligned = alignment(landmarks)
+    #toothSamples = tools.getLandmarksOfTooth(landmarks, 0)
+    #weights = calculateLandmarkWeights(toothSamples)
+    #alignSetOf1Tooth(landmarks,0, weights)

@@ -212,9 +212,9 @@ def buildDerivativeGrayscaleModel(landmarks, landmarkNormals, nbOfSamplesPerSide
     covarianceMatrix = covarianceMatrix/len(grayscaleImages)
     return covarianceMatrix, meanDerivativeValues
     
-def buildAllGreyscaleModels(landmarks, nbOfSamplesPerSide, gradientGrayscaleImages, showPoints=False):
+def buildAllGreyscaleModels(landmarks, nbOfSamplesPerSide, grayscaleImages, showPoints=False):
     #landmarks is a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data
-    if(len(gradientGrayscaleImages)!=landmarks.shape[0]):
+    if(len(grayscaleImages)!=landmarks.shape[0]):
         print 'Landmarks do not correspond to images!'
     #get the normals of all landmarks and put them in a structure similar to that of the landmarks
     allLandmarkNormals = calculateAllLandmarkNormals(landmarks)
@@ -243,13 +243,13 @@ def buildAllGreyscaleModels(landmarks, nbOfSamplesPerSide, gradientGrayscaleImag
                 modelLandmarkNormals.extend([landmarkNormalX,landmarkNormalY])
             #construct the greyscale model for landmark j in tooth i
             #print 'model '+str(j+1)+'/'+str(landmarks.shape[2]/2)
-            modelCovarMatrix, modelMean = buildDerivativeGrayscaleModel(modelLandmarks, modelLandmarkNormals, nbOfSamplesPerSide, gradientGrayscaleImages, showPoints)
+            modelCovarMatrix, modelMean = buildDerivativeGrayscaleModel(modelLandmarks, modelLandmarkNormals, nbOfSamplesPerSide, grayscaleImages, showPoints)
             modelCovarMatricesForTooth.append(modelCovarMatrix)
             modelMeansForTooth.append(modelMean)
         allModelCovarMatrices.append(modelCovarMatricesForTooth)
         allModelMeans.append(modelMeansForTooth)
     if showPoints:
-        for img in gradientGrayscaleImages:
+        for img in grayscaleImages:
             cv2.imshow('grayscaleModelSamples',cv2.resize(img, (0,0), fx=0.5, fy=0.5))
             cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -317,7 +317,7 @@ if __name__ == '__main__':
     images = prep.import_images('_Data/Radiographs', False)
     prepImages = prep.preprocess_all_images(images, False)
     #prepImages = prep.convertImagesToGrayscale(prepImages, True)
-    buildAllGreyscaleModels(landmarks, 10, prepImages, False)
+    buildAllGreyscaleModels(landmarks, 10, prepImages, True)
     landmarkNormals = calculateAllLandmarkNormals(landmarks)
     #plotLandmarksAndNormals(landmarks, landmarkNormals, 10, prepImages, True)
     #tests.show_landmarks_on_images('_Data/Radiographs', landmarks)
