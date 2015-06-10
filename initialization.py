@@ -5,6 +5,12 @@ import cv
 import importingAndPreprocessing as prep
 import tools
 
+def plotPoints(points, image):
+    for point in points:
+        x, y = point
+        cv2.circle(image,(int(x),int(y)),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
+    cv2.imshow("points", cv2.resize(image, (0,0), fx=0.5, fy=0.5))
+    print 'plotted the points'
 
 def getAvePosition(toothLandmarks):
     """Calculates average position of x and y coordinates for all samples of a single tooth
@@ -61,7 +67,10 @@ def manualInitialization(img):
     points = []
     def draw_circle(event,x,y,flags,param):
         print 'in function!!'
-        if event==cv2.EVENT_LBUTTONDBLCLK:
+        #if event==cv2.EVENT_LBUTTONDBLCLK:
+        if ((len(points)<8) and cv2.waitKey(0)):
+            print len(points)
+            print 'in event!'            
             cv2.circle(img,(x,y),1,cv2.cv.CV_RGB(255, 255, 255),-1 )
             #points.append(x,y)
             ix,iy = x, y
@@ -83,9 +92,9 @@ def manualInitialization(img):
         jy = iy
         
         if cv.WaitKey(15)%0x100==27:break	
-    
-    cv2.destroyAllWindows()
     print points
+    plotPoints(points, img)
+    cv2.destroyAllWindows()
     return points
 
     
