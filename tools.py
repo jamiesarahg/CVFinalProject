@@ -18,7 +18,7 @@ def calcMean(landmarks):
             tot = 0
             for j in range(landmarks.shape[0]):
                 tot += landmarks[j][i][k]
-            mean[i][k] = tot/14.0
+            mean[i][k] = tot/landmarks.shape[0]
 
     return mean
 
