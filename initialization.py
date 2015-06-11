@@ -65,6 +65,7 @@ def manualInitialization(img):
     #mouse callback function
     global points #declaring these variables as global so they can be accessed in both draw_circle and this function
     points = []
+
     def draw_circle(event,x,y,flags,param):
         
         if event==cv2.EVENT_LBUTTONDOWN: #
@@ -84,7 +85,8 @@ def manualInitialization(img):
     cv2.setMouseCallback("image",draw_circle)
     
     while(len(points)<8): #Checks to see if points is less than eight sets of coordinates long
-        cv2.imshow("image", cv2.resize(img, (0,0), fx=0.5, fy=0.5))        
+        cv2.imshow("image", cv2.resize(img, (0,0), fx=0.5, fy=0.5))  
+        print "Please click where you would like the teeth to be initialized"
         if cv.WaitKey(15)%0x100==27:break	#If escape key is pressed breaks from loop
     
     cv2.destroyAllWindows()
@@ -93,10 +95,10 @@ def manualInitialization(img):
 
     
 if __name__ == '__main__':
+    #
+    #imgs = prep.import_images('_Data/Radiographs', show=False)
+    #
+    #manualInitialization(imgs[0])
     
-    imgs = prep.import_images('_Data/Radiographs', show=False)
-    
-    manualInitialization(imgs[0])
-    
-    #landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)
-    #initialization(landmarks)
+    landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)
+    initialization(landmarks)
