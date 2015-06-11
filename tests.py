@@ -56,4 +56,13 @@ def show_landmarks_on_images(imgDirectory, landmarks):
         cv2.waitKey(0)
         counter+=1
     cv2.destroyAllWindows()
-        
+    
+def show_landmarks_on_image_dynamic(image, landmarks, name='showing landmarks'):
+    #images is an array of images
+    #landmarks is a two dimentional array of the eight teeth, each with its landmark data
+    for i in range(landmarks.shape[0]):
+        for j in range(landmarks.shape[1]/2):
+            cv2.circle(image,(int(landmarks[i][2*j]),int(landmarks[i][2*j+1])),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
+    small = cv2.resize(image, (0,0), fx=0.5, fy=0.5) 
+    cv2.imshow(name,small)
+    cv2.waitKey(0)
