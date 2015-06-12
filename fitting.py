@@ -3,6 +3,8 @@ import numpy as np
 import math
 import importingAndPreprocessing as prep
 import tests
+import alignment
+import modeling
 
 def calculateAllLandmarkNormals(allLandmarks):
     #landmarks is a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data
@@ -299,25 +301,96 @@ def mahalanobisDistance(sample, mean, covarianceMatrix):
     result = np.matrix.transpose(difference) * np.linalg.inv(covarianceMatrix) * difference
     return result
     
-def calculateNewLandmarksForToothInImage(landmarks, nbOfSamplesPerSide, modelMeans, modelCovarMatrices, gradientGreyscaleImage):
+def calculateNewLandmarksForToothInImage(landmarks, nbOfSamplesPerSide, grayscaleModelMeans, grayscaleModelCovarMatrices, gradientGreyscaleImage):
     #landmarks is an array of interleaved x and y coordinates for all landmarks of one tooth in one image
-    #modelMeans is an array of model means (one for each landmark)
-    #modelCovarMatrices is an array of model covariance matrices (one for each landmark)
+    #grayscaleModelMeans is an array of model means (one for each landmark)
+    #grayscaleModelCovarMatrices is an array of model covariance matrices (one for each landmark)
     #gradientGreyscaleImage is the image in which the previous variables were evaluated
     landmarkNormals = calculateLandmarkNormals(landmarks)
     newLandmarks = []
     for i in range(len(landmarks)/2):
-        newLandmarkX, newLandmarkY = calculateNewLandmarkWithDerivativeGrayscaleModel(landmarks[2*i], landmarks[2*i+1], landmarkNormals[2*i], landmarkNormals[2*i+1], nbOfSamplesPerSide, modelMeans[i], modelCovarMatrices[i], gradientGreyscaleImage)
+        newLandmarkX, newLandmarkY = calculateNewLandmarkWithDerivativeGrayscaleModel(landmarks[2*i], landmarks[2*i+1], landmarkNormals[2*i], landmarkNormals[2*i+1], nbOfSamplesPerSide, grayscaleModelMeans[i], grayscaleModelCovarMatrices[i], gradientGreyscaleImage)
         newLandmarks.extend([newLandmarkX,newLandmarkY])
     #newLandmarks is an array of interleaved x and y coordinates for all new landmarks of this tooth in this image
     return newLandmarks
     
+def matchModelToShapeIteration(meanShapeLandmarks, P, principalEigenvalues, shapeLandmarks, landmarkWeights, b):
+    b = adaptToModelBoundaries(b, principalEigenvalues)
+    
+    dot = np.dot(P,b)
+    temp = np.zeros([dot.shape[0]])
+    for i in range(dot.shape[0]):
+        temp[i] = dot[i]
+    dot = np.array(temp)
+    
+    modelLandmarks = meanShapeLandmarks + dot
+    transformation = alignment.alignFirstToSecondTooth(modelLandmarks, shapeLandmarks, landmarkWeights)
+    transformedModelLandmarks = alignment.transformLandmarks(transformation, modelLandmarks)
+    invTransformation = alignment.invertTransformation(transformation)
+    transformedShapeLandmarks = alignment.transformLandmarks(invTransformation, shapeLandmarks)
+    intermediateDot = np.dot(transformedShapeLandmarks, meanShapeLandmarks)
+    transformedShapeLandmarksInTangentPlane = np.array(transformedShapeLandmarks) / intermediateDot
+    newB = np.dot(np.transpose(P), (transformedShapeLandmarksInTangentPlane - meanShapeLandmarks))
+    return transformation, newB, transformedModelLandmarks
+    
+def matchModelToShapeIterationConvergenceCheck(oldB, newB, oldTransformation, newTransformation):
+    converged = valuesConvergenceCheck(oldB, newB) and valuesConvergenceCheck(oldTransformation, newTransformation)
+    return converged
+    
+def valuesConvergenceCheck(oldValues, newValues):
+    for i in range(len(oldValues)):
+        if abs(oldValues[i] - newValues[i]) > 10e-10:
+            return False
+    return True
+    
+def adaptToModelBoundaries(b, principalEigenvalues):
+    adaptedB = np.zeros(b.shape)
+    for i in range(len(b)):
+        rightBoundary = 3*math.sqrt(principalEigenvalues[i])
+        leftBoundary = -rightBoundary
+        if (b[i] < leftBoundary):
+            adaptedB[i] = leftBoundary
+        elif (b[i] > rightBoundary):
+            adaptedB[i] = rightBoundary
+        else:
+            adaptedB[i] = b[i]
+    return adaptedB
+        
+def matchModelToShape(meanShapeLandmarks, principalEigenvalues, principalEigenvectors, shapeLandmarks, landmarkWeights):    
+    principalEigenvectors = np.transpose(np.array(principalEigenvectors))
+    prevB = np.transpose(np.matrix(np.zeros([len(principalEigenvalues)])))
+    prevTransformation = (1,0,0,0)
+        
+    temp = np.zeros([meanShapeLandmarks.shape[0]])
+    for i in range(meanShapeLandmarks.shape[0]):
+        temp[i] = meanShapeLandmarks[i]
+    meanShapeLandmarks = np.array(temp)
+    
+    converged = False
+    while converged is False:
+        nextTransformation, nextB, modelLandmarks = matchModelToShapeIteration(meanShapeLandmarks, principalEigenvectors, principalEigenvalues, shapeLandmarks, landmarkWeights, prevB)
+        converged = matchModelToShapeIterationConvergenceCheck(prevB, nextB, prevTransformation, nextTransformation)
+        prevB = nextB
+        prevTransformation = nextTransformation
+    return nextTransformation, nextB, modelLandmarks
+    
 if __name__ == '__main__':
     landmarks = prep.load_landmark_data('_Data/Landmarks/original', 14)
     images = prep.import_images('_Data/Radiographs', False)
-    prepImages = prep.preprocess_all_images(images, False)
+    #prepImages = prep.preprocess_all_images(images, False)
     #prepImages = prep.convertImagesToGrayscale(prepImages, True)
-    buildAllGreyscaleModels(landmarks, 10, prepImages, True)
-    landmarkNormals = calculateAllLandmarkNormals(landmarks)
+    #buildAllGreyscaleModels(landmarks, 10, prepImages, True)
+    #landmarkNormals = calculateAllLandmarkNormals(landmarks)
     #plotLandmarksAndNormals(landmarks, landmarkNormals, 10, prepImages, True)
-    #tests.show_landmarks_on_images('_Data/Radiographs', landmarks)
+    
+    aligned = alignment.alignment(landmarks)
+    toothNb = 1
+    imageNb = 0
+    alignedLandmarks = aligned[3]
+    alignedLandmarksForTooth = alignedLandmarks[:][toothNb][:]
+    model = modeling.PCA(alignedLandmarksForTooth, 99)
+    landmarkWeights = alignment.calculateLandmarkWeightsForAllTeeth(landmarks)
+    t, b, transformedLandmarks = matchModelToShape(model[0], model[1], model[2], landmarks[imageNb][toothNb], landmarkWeights[toothNb])
+    #transf = alignment.alignFirstToSecondTooth(model[0],landmarks[imageNb][toothNb],landmarkWeights[toothNb])
+    #transformedLandmarks = alignment.transformLandmarks(transf,model[0])
+    tests.show_landmarks_one_tooth_on_image_dynamic(images[imageNb], transformedLandmarks,'transformed model landmarks for tooth '+str(toothNb)+' on image '+str(imageNb))

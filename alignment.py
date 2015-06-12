@@ -112,6 +112,29 @@ def transformLandmarks(transformation, landmarks):
        M.append(bottom)
     transformedLandmarks = map(sum, zip(M,t))#M+t
     return transformedLandmarks
+    
+def invertTransformation(transformation):
+    invertedTransformation = np.zeros(transformation.shape)
+    #calculate angle
+    tanTheta = transformation[1]/transformation[0]
+    theta = math.atan(tanTheta)
+    #calculate scale
+    sinTheta = math.sin(theta)
+    cosTheta = math.cos(theta)
+    scale1 = transformation[1] / sinTheta
+    scale2 = transformation[0] / cosTheta
+    scale = (scale1 + scale2) / 2
+    #invert angle
+    theta = -theta
+    #invert scale
+    scale = 1/scale
+    #invert transformation regarding scale and rotation
+    invertedTransformation[0] = scale*cosTheta
+    invertedTransformation[1] = scale*sinTheta
+    #invert translation
+    invertedTransformation[2] = -transformation[2]
+    invertedTransformation[3] = -transformation[3]
+    return invertedTransformation
 
 def alignmentIteration(landmarks, templates, weights):
     '''

@@ -77,13 +77,35 @@ def allPCA(alignedShapes, cutOffValue=None):
         model  = PCA(singleTooth, cutOffValue)
         models.append(model)
     return models
-
+    
+def modelInstance(meanShapeLandmarks, principalEigenvectors, b):
+    principalEigenvectors = np.transpose(np.array(principalEigenvectors))
+    temp = np.zeros([meanShapeLandmarks.shape[0]])
+    for i in range(meanShapeLandmarks.shape[0]):
+        temp[i] = meanShapeLandmarks[i]
+    meanShapeLandmarks = np.array(temp)
+    
+    print principalEigenvectors.shape
+    print b.shape
+    dot = np.dot(principalEigenvectors,b)
+    temp = np.zeros([dot.shape[0]])
+    for i in range(dot.shape[0]):
+        temp[i] = dot[i]    
+    dot = np.array(temp)
+    
+    modelLandmarks = meanShapeLandmarks + dot
+    return modelLandmarks
+    
 if __name__ == '__main__':
-    landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)    
+    landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)  
+    images = prep.import_images('_Data/Radiographs', False)  
     aligned = alignment.alignment(landmarks)
     models = allPCA(aligned[3], 99)
-    for model in models:
-        print 'model'
-        print len(model[0])
-        print len(model[1])
-        print model[2].shape
+    model = models[0]
+    b = model[1]
+    #b[0] = -883.77828036
+    #b[1] = -202.90089261
+    for i in range(len(b)):
+        b[i] = -1*math.sqrt(b[i])
+    instanceLandmarks = modelInstance(model[0], model[2], b)
+    tests.show_landmarks_one_tooth_on_image_dynamic(images[0], instanceLandmarks,'model instance landmarks')
