@@ -5,6 +5,12 @@ import cv
 import importingAndPreprocessing as prep
 import tools
 
+def plotPoints(points, image):
+    for point in points:
+        x, y = point
+        cv2.circle(image,(int(x),int(y)),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
+    cv2.imshow("points", cv2.resize(image, (0,0), fx=0.5, fy=0.5))
+    print 'plotted the points'
 
 def getAvePosition(toothLandmarks):
     """Calculates average position of x and y coordinates for all samples of a single tooth
@@ -84,15 +90,19 @@ def manualInitialization(img):
     #Setting draw_circle to be the function run when the mouse is clicked
     cv2.setMouseCallback("image",draw_circle)
     
-    while(len(points)<8): #Checks to see if points is less than eight sets of coordinates long
-        cv2.imshow("image", cv2.resize(img, (0,0), fx=0.5, fy=0.5))  
-        #print "Please click where you would like the teeth to be initialized"
-        if cv.WaitKey(15)%0x100==27:break	#If escape key is pressed breaks from loop
-    
+    while(len(points)<8):
+        cv2.imshow("image", cv2.resize(img, (0,0), fx=0.5, fy=0.5))
+        if jx != ix: #or jy != iy:
+            points.append((ix, iy))
+            print points
+        jx = ix
+        jy = iy
+        
+        if cv.WaitKey(15)%0x100==27:break	
+    print points
+    plotPoints(points, img)
     cv2.destroyAllWindows()
-    print points #print for debugging
-    return points #returns list of coordinates
-
+    return points
     
 if __name__ == '__main__':
     #
