@@ -19,16 +19,14 @@ def calcMean(landmarks):
             for j in range(landmarks.shape[0]):
                 tot += landmarks[j][i][k]
             mean[i][k] = tot/landmarks.shape[0]
-
     return mean
 
 def calcMeanOneTooth(landmarks):
     '''calculates mean of landmarks of single tooth. takes in 2d array of (14,80) and returns mean array of shape (80)'''
     mean = np.zeros([80])
     for i in range(landmarks.shape[1]):
-            tot = 0
-            for j in range(landmarks.shape[0]):
-                tot += landmarks[j][i]
-            mean[i] = tot/14.0
-
+        tot = 0
+        for j in range(landmarks.shape[0]):
+            tot += landmarks[j][i]
+        mean[i] = tot/landmarks.shape[0]
     return mean

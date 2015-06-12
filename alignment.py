@@ -179,17 +179,17 @@ def alignment(landmarks, weights=None):
             done = True
         oldMeans = newMeans
     print 'Number of iterations: '+str(count)
-    finalLandmarks = np.zeros([landmarks.shape[0],landmarks.shape[1],landmarks.shape[2]])
+    transformedMeans = np.zeros([landmarks.shape[0],landmarks.shape[1],landmarks.shape[2]])
     transformations = np.zeros([landmarks.shape[0],landmarks.shape[1],4])
     for i in range(landmarks.shape[0]):
         for j in range(landmarks.shape[1]):
             transformation = alignFirstToSecondTooth(newMeans[j], oldLandmarks[i][j], weights[j])
             transformations[i][j] = transformation
-            finalLandmarks[i][j] = transformLandmarks(transformation, newMeans[j])
+            transformedMeans[i][j] = transformLandmarks(transformation, newMeans[j])
     #transformations is a three dimentional array of the images, each with arrays for the eight teeth, each with the transformation data (which aligns the respective mean landmark data with the old landmark data)
     #newMeans is a two dimentional array of the teeth, each with mean landmark data (across the images)
     #finalLandmarks is a three dimentional array of the images, each with arrays for the eight teeth, each with the new landmark data (which is the mean landmark data that is aligned with the old landmark data)
-    return newMeans, transformations, finalLandmarks
+    return newMeans, transformations, transformedMeans, newLandmarks
     
 if __name__ == '__main__':
     landmarks = prep.load_landmark_data('_Data/Landmarks/original', 14)
