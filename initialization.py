@@ -86,7 +86,7 @@ def manualInitialization(img):
     
     while(len(points)<8): #Checks to see if points is less than eight sets of coordinates long
         cv2.imshow("image", cv2.resize(img, (0,0), fx=0.5, fy=0.5))  
-        print "Please click where you would like the teeth to be initialized"
+        #print "Please click where you would like the teeth to be initialized"
         if cv.WaitKey(15)%0x100==27:break	#If escape key is pressed breaks from loop
     
     cv2.destroyAllWindows()
