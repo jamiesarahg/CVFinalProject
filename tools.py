@@ -30,3 +30,15 @@ def calcMeanOneTooth(landmarks):
             tot += landmarks[j][i]
         mean[i] = tot/landmarks.shape[0]
     return mean
+    
+def calcCenter(landmarks):
+    '''calculates center of shape defined by landmarks of single tooth. takes in 1d array of (80) and returns x and y coordinate of center'''
+    xCenter = 0
+    yCenter = 0
+    nbOfLandmarks = len(landmarks)/2
+    for i in range(nbOfLandmarks):
+        xCenter += landmarks[i*2]
+        yCenter += landmarks[i*2+1]
+    xCenter = xCenter/nbOfLandmarks
+    yCenter = yCenter/nbOfLandmarks
+    return xCenter, yCenter

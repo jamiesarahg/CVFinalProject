@@ -76,3 +76,9 @@ def show_landmarks_one_tooth_on_image_dynamic(img, landmarks, name='showing land
     small = cv2.resize(image, (0,0), fx=0.3, fy=0.3) 
     cv2.imshow(name,small)
     cv2.waitKey(0)
+    return image
+    
+def markLandmarksInImage(image, landmarks):
+    #landmarks is an array of landmark data for one shape
+    for i in range(len(landmarks)/2):
+        cv2.circle(image,(int(landmarks[2*i]),int(landmarks[2*i+1])),1,cv2.cv.CV_RGB(255, 255, 255),2, 8, 0 )

@@ -323,7 +323,7 @@ def calculateNewLandmarksForToothInImage(landmarks, nbOfSamplesPerSide, grayscal
     
 if __name__ == '__main__':
     landmarks = prep.load_landmark_data('_Data/Landmarks/original', 14)
-    images = prep.import_images('_Data/Radiographs', False)
+    images = prep.import_images('_Data/Radiographs', False, 0)
     prepImages = prep.preprocess_all_images(images, False)
     #prepImages = prep.convertImagesToGrayscale(prepImages, True)
     buildAllGreyscaleModels(landmarks, 10, prepImages, False)

@@ -3,7 +3,7 @@ import cv2.cv as cv
 import os
 import fnmatch
 import numpy as np
-
+import copy
    
 def load_landmark_data(directory, num_images):
     """inputs directory of where landmark data is saved and number of images to load. 
@@ -14,7 +14,7 @@ def load_landmark_data(directory, num_images):
             landmarks[i][j] = np.loadtxt(directory+'/landmarks'+str(i+1)+'-'+str(j+1)+'.txt')
     return landmarks
 
-def import_images(directory, show=False):
+def import_images(directory, show=False, nbOfPrecedingImages=0):
     """ imputs: directory containing images.
         optional imputs: show- if false won't show images
         outputs a list of images
@@ -25,19 +25,18 @@ def import_images(directory, show=False):
     count=0
     for filename in fnmatch.filter(os.listdir(directory),'*.tif'):
         file_in = directory+"/"+filename
-
         images.append(cv2.imread(file_in,0))
         count+=1
+    #put images in the right order
     for filename in fnmatch.filter(os.listdir(directory),'*.tif'):
         file_in = directory+"/"+filename
-        filenum = filename[:-2]
-        filenum1=filenum[:-2]
-        images[int(filenum1)-1]=cv2.imread(file_in,0)
+        filenum = filename[:-4]
+        images[int(filenum)-1-nbOfPrecedingImages]=cv2.imread(file_in,0)
         count+=1
     
     if show:
-        for img in images:
-            cv2.imshow('img',cv2.resize(img, (0,0), fx=0.25, fy=0.25))
+        for i in range(len(images)):
+            cv2.imshow('image '+str(i+1+nbOfPrecedingImages),cv2.resize(images[i], (0,0), fx=0.25, fy=0.25))
             cv2.waitKey(0)
     cv2.destroyAllWindows()
     return images
@@ -49,7 +48,8 @@ def claheObject(img, clipLimit=4.0, tileGridSize=(20,15)):
     return clahe
 
 
-def preprocess_image(img, kernel = 13, show=False):
+def preprocess_image(image, kernel = 13, show=False):
+    img = copy.deepcopy(image)
     """ Function for processing a single image
         input - image that has already been uploaded
         optional inputs: kernel - kernel parameter for blur, show - determines if images are shown
