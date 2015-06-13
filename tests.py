@@ -2,6 +2,7 @@ import cv2
 import cv2.cv as cv
 import os
 import fnmatch
+import copy
 def plot1toothLandmarkonImage(img, E):       
         x = 0
         y = 1
@@ -57,8 +58,9 @@ def show_landmarks_on_images(imgDirectory, landmarks):
         counter+=1
     cv2.destroyAllWindows()
     
-def show_landmarks_on_image_dynamic(image, landmarks, name='showing landmarks'):
+def show_landmarks_on_image_dynamic(img, landmarks, name='showing landmarks'):
     #landmarks is a two dimentional array of the eight teeth, each with its landmark data
+    image = copy.deepcopy(img)
     for i in range(landmarks.shape[0]):
         for j in range(landmarks.shape[1]/2):
             cv2.circle(image,(int(landmarks[i][2*j]),int(landmarks[i][2*j+1])),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
@@ -66,10 +68,11 @@ def show_landmarks_on_image_dynamic(image, landmarks, name='showing landmarks'):
     cv2.imshow(name,small)
     cv2.waitKey(0)
     
-def show_landmarks_one_tooth_on_image_dynamic(image, landmarks, name='showing landmarks'):
+def show_landmarks_one_tooth_on_image_dynamic(img, landmarks, name='showing landmarks'):
     #landmarks is an array of landmark data for one shape
+    image = copy.deepcopy(img)
     for i in range(len(landmarks)/2):
-        cv2.circle(image,(int(landmarks[2*i]),int(landmarks[2*i+1])),1,cv2.cv.CV_RGB(255, 0, 0),2, 8, 0 )
-    small = cv2.resize(image, (0,0), fx=0.5, fy=0.5) 
+        cv2.circle(image,(int(landmarks[2*i]),int(landmarks[2*i+1])),1,cv2.cv.CV_RGB(255, 255, 255),2, 8, 0 )
+    small = cv2.resize(image, (0,0), fx=0.3, fy=0.3) 
     cv2.imshow(name,small)
     cv2.waitKey(0)
