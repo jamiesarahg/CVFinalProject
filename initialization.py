@@ -57,7 +57,7 @@ def initialization(landmarks):
         avePositionsX.append(avePositionToothX)
         avePositionsY.append(avePositionToothY)
     
-    showAvePosition(avePositionsX, avePositionsY)
+    return avePositionsX, avePositionsY
     
 
 def autoInit(landmarks, images):
@@ -108,9 +108,9 @@ def manualInitialization(image):
             cv2.circle(img,(x*2,y*2),5,cv2.cv.CV_RGB(255, 255, 255),-1 )
            
            #for debugging 
-            print 'x',x
-            print 'y',y
-            print points
+            #print 'x',x
+            #print 'y',y
+            #print points
             points.append((x*2, y*2)) #Must multiply by two because imaged is resized by .5Som
             
     #Create a window and bind the function to the window
@@ -122,7 +122,7 @@ def manualInitialization(image):
         cv2.imshow("image", cv2.resize(img, (0,0), fx=0.5, fy=0.5))
         
         if cv.WaitKey(15)%0x100==27:break	
-    print points
+    #print points
     plotPoints(points, img)
     cv2.destroyAllWindows()
     return points

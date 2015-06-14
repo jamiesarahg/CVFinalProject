@@ -92,7 +92,8 @@ def convertImagesToGrayscale(colorImages, show=False):
     cv2.destroyAllWindows()
     return grayscaleImages
 
-def detectEdges(img, i, show=False):
+def detectEdges(image, i, show=False):
+    img = copy.deepcopy(image)
     """Uses canny to detect edges
         inputs: img - already uploaded img, i - integer
         output: edges of image"""
@@ -185,16 +186,19 @@ def combine2Images(img1, img2, show=False):
         if show:
             cv2.imshow('imgs together', cv2.resize(readjust, (0,0), fx=0.25, fy=0.25))
             cv2.waitKey(0)
+        return readjust
 
 def combineAll(imgs1, imgs2, show=False):
+    combinations = copy.deepcopy(imgs1)
     for i in range(len(imgs1)):
-        combine2Images(imgs1[i],imgs2[i], show=show)
+        combinations[i] = combine2Images(imgs1[i],imgs2[i], show=show)
+    return combinations
 
 if __name__ == '__main__':
     images = import_images('_Data/Radiographs')
-    processed=preprocess_all_images(images, show=False)
-    edges = allDetectEdges(images)
-    combineAll(processed,edges, show=True)
+    processed=preprocess_all_images(images, show=True)
+    #edges = allDetectEdges(images)
+    #combineAll(processed,edges, show=True)
     
     
     #xgradients, ygradients = preprocessImagesGradient(images)
