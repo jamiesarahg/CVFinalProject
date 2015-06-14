@@ -326,4 +326,4 @@ if __name__ == '__main__':
     images = prep.import_images('_Data/Radiographs', False, 0)
     prepImages = prep.preprocess_all_images(images, False)
     #prepImages = prep.convertImagesToGrayscale(prepImages, True)
-    buildAllGreyscaleModels(landmarks, 10, prepImages, False)
+    buildAllGreyscaleModels(landmarks, 10, prepImages, showPoints=True)

@@ -28,6 +28,7 @@ def show_landmarks_on_image(img, landmark, count):
                     count+=1
                     x=x+2
                     y=y+2
+
         small = cv2.resize(img, (0,0), fx=0.25, fy=0.25) 
         cv2.imshow('img'+str(count),small)
         cv2.waitKey(0)
@@ -52,6 +53,9 @@ def show_landmarks_on_images(imgDirectory, landmarks):
                     count+=1
                     x=x+2
                     y=y+2
+                small = cv2.resize(img, (0,0), fx=0.5, fy=0.5) 
+                cv2.imshow('img'+str(count),small)
+                cv2.waitKey(0)
         small = cv2.resize(img, (0,0), fx=0.5, fy=0.5) 
         cv2.imshow('img'+str(counter),small)
         cv2.waitKey(0)
