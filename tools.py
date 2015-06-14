@@ -42,3 +42,9 @@ def calcCenter(landmarks):
     xCenter = xCenter/nbOfLandmarks
     yCenter = yCenter/nbOfLandmarks
     return xCenter, yCenter
+    
+def valuesConvergenceCheck(oldValues, newValues):
+    for i in range(len(oldValues)):
+        if abs(oldValues[i] - newValues[i]) > 10e-10:
+            return False
+    return True

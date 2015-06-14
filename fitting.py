@@ -37,14 +37,8 @@ def matchModelToShapeIteration(meanShapeLandmarks, P, principalEigenvalues, shap
     return transformation, newB, transformedModelLandmarks
     
 def matchModelToShapeIterationConvergenceCheck(oldB, newB, oldTransformation, newTransformation):
-    converged = valuesConvergenceCheck(oldB, newB) and valuesConvergenceCheck(oldTransformation, newTransformation)
+    converged = tools.valuesConvergenceCheck(oldB, newB) and tools.valuesConvergenceCheck(oldTransformation, newTransformation)
     return converged
-    
-def valuesConvergenceCheck(oldValues, newValues):
-    for i in range(len(oldValues)):
-        if abs(oldValues[i] - newValues[i]) > 10e-10:
-            return False
-    return True
     
 def adaptToModelBoundaries(b, principalEigenvalues):
     maxValue = np.max(principalEigenvalues)
