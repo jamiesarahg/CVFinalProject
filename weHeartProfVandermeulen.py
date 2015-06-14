@@ -14,8 +14,8 @@ import modeling
 
 if __name__ == '__main__':
     landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)    
-    aligned = alignment.alignment(landmarks)
-    models = modeling.allPCA(aligned[3], 99)
+    #aligned = alignment.alignment(landmarks)
+    #models = modeling.allPCA(aligned[3], 99)
     #calcMean(landmarks)
     #toothSamples = tools.getLandmarksOfTooth(landmarks, 0)
     #weights = alignment.calculateLandmarkWeights(toothSamples)
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     #tests.plot1toothLandmarkonImage(img, E)    
     #transformAll(landmarks)
     #calculateLandmarkWeights(out)
-    #prep.show_landmarks_on_images('_Data/Radiographs', landmarks)    
+    tests.show_landmarks_on_images('_Data/Radiographs', landmarks)    
     #out = import_images('_Data/Radiographs')
     ##preprocess_all_images(out)
     #images = prep.import_images('_Data/Radiographs', False)

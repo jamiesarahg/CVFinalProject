@@ -57,6 +57,35 @@ def initialization(landmarks):
         avePositionsY.append(avePositionToothY)
     
     showAvePosition(avePositionsX, avePositionsY)
+    
+
+def autoInit(landmarks, images):
+    shapeOfImages = {}
+    avePositionsX = []
+    avePositionsY = []
+    for i in range(14):
+        shape = images[i].shape
+        shapeOfImages[i] = shape
+    
+    for toothNum in range(0,8):
+        x=0
+        y=0
+        toothLandmarks = tools.getLandmarksOfTooth(landmarks, toothNum)
+        for i in range(14):
+            imshape = shapeOfImages[i]
+            print imshape
+            for j in range(40):
+                x += toothLandmarks[i][j * 2]/imshape[0]
+                y += toothLandmarks[i][j * 2 + 1]/imshape[1]
+        x = x/560
+        y = y/560
+        avePositionsX.append(x)
+        avePositionsY.append(y)
+        
+    print avePositionsX, avePositionsY
+
+    
+    
 
 def manualInitialization(img):
     """
@@ -64,8 +93,7 @@ def manualInitialization(img):
     Input: a cv loaded image
     outputs: a list of eight points corresponding to the points that the user clicks
     
-    This function will display the image that is inputted into the function and the use should then click each of the eight teeth, starting on the top left and then going clockwise (WE CAN CHANGE THAT WHEN WE FIGURE OUT THE TEETH ORDER
-    The function will then draw a circle on the place which was clicked.
+    This function will display the image that is inputted into the function and the use should then click each of the eight teeth, starting on the top left to the top right, then bottom left to bottom right
     After eight clicks, the image will exit and the list of points will be returned
     """
     #mouse callback function
@@ -92,17 +120,21 @@ def manualInitialization(img):
     
     while(len(points)<8):
         cv2.imshow("image", cv2.resize(img, (0,0), fx=0.5, fy=0.5))
-        if jx != ix: #or jy != iy:
-            points.append((ix, iy))
-            print points
-        jx = ix
-        jy = iy
         
         if cv.WaitKey(15)%0x100==27:break	
     print points
     plotPoints(points, img)
     cv2.destroyAllWindows()
     return points
+def manualInitializationAll(images):
+    initPointsAll = []
+    for i in range(len(images)):
+        initPoints = manualInitialization(images[i])
+        initPointsAll.append(initPoints)
+    print initPointsAll
+    return initPointsAll
+    
+    
     
 if __name__ == '__main__':
     #
@@ -111,4 +143,11 @@ if __name__ == '__main__':
     #manualInitialization(imgs[0])
     
     landmarks=prep.load_landmark_data('_Data/Landmarks/original', 14)
-    initialization(landmarks)
+    #initialization(landmarks)
+    
+    #images = prep.import_images('_Data/Radiographs/extra', show=False, nbOfPrecedingImages=14)
+    #manualInitializationAll(images)
+    
+    imgs = prep.import_images('_Data/Radiographs/extra', show=False, nbOfPrecedingImages=14)
+    autoInit(landmarks,imgs)
+    
