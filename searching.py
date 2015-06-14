@@ -9,7 +9,14 @@ import tools
 import fitting
 import grayscaleModeling as gs
 import copy
+
+def getInitialToothCenterInImage(cleanImage, toothNb, meanToothLandmarks):
     
+def getInitialToothLandmarksInImage(cleanImage, toothNb, meanToothLandmarks):
+    xCenter, yCenter = tools.calcCenter(meanToothLandmarks)
+    initXCenter, initYCenter = getInitialToothCenterInImage(cleanImage, toothNb)
+    return 
+
 def searchForToothInImage(cleanImage, compModel, gsModels, nbOfGsTestSamplesPerSide):
     #matchModelToShape(meanShapeLandmarks, principalEigenvalues, principalEigenvectors, shapeLandmarks, landmarkWeights)   
     pass
