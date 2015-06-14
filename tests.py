@@ -83,8 +83,6 @@ def show_landmarks_one_tooth_on_image_dynamic(img, landmarks, name='showing land
     cv2.imshow(name,small)
     if waitkey:
         cv2.waitKey(0)
-    else:
-        time.sleep(1)
     return image
     
 def markLandmarksInImage(image, landmarks):

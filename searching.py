@@ -10,6 +10,7 @@ import fitting
 import grayscaleModeling as gs
 import copy
 import initialization as init
+import time
 
 '''this function does not perform as expected for some reason'''
 def getAutoInitialTeethCentersInImage(targetImage, landmarks, trainingImages):
@@ -52,11 +53,11 @@ def getInitialTeethLandmarksInImage(targetImage, meanTeethLandmarks, allLandmark
         initialTeethLandmarks[toothNb] = getInitialToothLandmarksInImage(targetImage, meanTeethLandmarks[toothNb], initialXCenters[toothNb], initialYCenters[toothNb])
     return initialTeethLandmarks
     
-def searchConvergenceCheck(oldB, newB, oldTransformation, newTransformation):
-    converged = tools.valuesConvergenceCheck(oldB, newB) and tools.valuesConvergenceCheck(oldTransformation, newTransformation)
+def searchConvergenceCheck(oldB, newB, oldTransformation, newTransformation, minDifference):
+    converged = tools.valuesConvergenceCheck(oldB, newB, minDifference) and tools.valuesConvergenceCheck(oldTransformation, newTransformation, minDifference)
     return converged
 
-def searchForToothInImage(cleanImage, initialToothLandmarks, landmarkWeights, compModel, gsModelMeans, gsModelCovarMatrices, nbOfGsTestSamplesPerSide, show=False):
+def searchForToothInImage(cleanImage, initialToothLandmarks, landmarkWeights, compModel, gsModelMeans, gsModelCovarMatrices, nbOfGsTestSamplesPerSide, showIntermediate=False, showTooth=True):
     meanToothLandmarks = compModel[0]
     principalComponentVariances = compModel[1]
     principalComponents = compModel[2]
@@ -67,30 +68,45 @@ def searchForToothInImage(cleanImage, initialToothLandmarks, landmarkWeights, co
     
     converged = False
     pleaseStop = False
+    minDifference = 10e-8
+    count = 1
     while not (converged or pleaseStop):
         try:
-            if show:
+            if showIntermediate:
                 tests.show_landmarks_one_tooth_on_image_dynamic(cleanImage, prevModelLandmarks, name='intermediate search results for one tooth', waitkey=True)
             intermediateToothLandmarks = gs.calculateNewLandmarksForToothInImage(prevModelLandmarks, nbOfGsTestSamplesPerSide, gsModelMeans, gsModelCovarMatrices, cleanImage)
             nextTransformation, nextB, nextModelLandmarks = fitting.matchModelToShape(meanToothLandmarks, principalComponentVariances, principalComponents, intermediateToothLandmarks, landmarkWeights)
-            converged = searchConvergenceCheck(prevB, nextB, prevTransformation, nextTransformation)
+            converged = searchConvergenceCheck(prevB, nextB, prevTransformation, nextTransformation, minDifference)
+            if count is 100:
+                minDifference = 10e-6
+            elif count is 200:
+                minDifference = 10e-4
+            elif count is 300:
+                minDifference = 10e-2
+            elif count is 400:
+                minDifference = 10e-1
+            elif count is 500:
+                pleaseStop = True
             prevModelLandmarks = nextModelLandmarks
             prevB = nextB
             prevTransformation = nextTransformation
+            count += 1
         except KeyboardInterrupt:
             break
+    if showTooth:
+        tests.show_landmarks_one_tooth_on_image_dynamic(cleanImage, nextModelLandmarks, name='final search results for one tooth', waitkey=True)
     cv2.destroyAllWindows()
     return nextTransformation, nextB, nextModelLandmarks
 
-def searchForTeethInImage(image, initialTeethLandmarks, landmarkWeights, componentModels, grayscaleModelMeans, grayscaleModelCovarianceMatrices, nbOfGsTestSamplesPerSide=20, show=False):
+def searchForTeethInImage(image, initialTeethLandmarks, landmarkWeights, componentModels, grayscaleModelMeans, grayscaleModelCovarianceMatrices, nbOfGsTestSamplesPerSide=20, showIntermediate=False, showTooth=True):
     markedImage = copy.deepcopy(image)
     for i in range(len(componentModels)):
-        toothFeatures = searchForToothInImage(image, initialTeethLandmarks[i], landmarkWeights[i], componentModels[i], grayscaleModelMeans[i], grayscaleModelCovarianceMatrices[i], nbOfGsTestSamplesPerSide, show)
+        toothFeatures = searchForToothInImage(image, initialTeethLandmarks[i], landmarkWeights[i], componentModels[i], grayscaleModelMeans[i], grayscaleModelCovarianceMatrices[i], nbOfGsTestSamplesPerSide, showIntermediate, showTooth)
         toothLandmarks = toothFeatures[2]
         tests.markLandmarksInImage(markedImage, toothLandmarks)
     return markedImage
 
-def searchForTeethInImages(nbOfGsModelSamplesPerSide=10, nbOfGsTestSamplesPerSide=20, cutOffValue=None, nbOfPrincipalComponents=40, show=False):
+def searchForTeethInImages(nbOfGsModelSamplesPerSide=10, nbOfGsTestSamplesPerSide=20, cutOffValue=None, nbOfPrincipalComponents=40, showIntermediate=False, showTooth=True):
     #import and preprocess training set images
     trainingImages = prep.import_images('_Data/Radiographs', False)
     trainingImages =  prep.preprocess_all_images(trainingImages, False)
@@ -113,13 +129,13 @@ def searchForTeethInImages(nbOfGsModelSamplesPerSide=10, nbOfGsTestSamplesPerSid
     meanTeethLandmarks = [model[0] for model in componentModels]
     for testImage in testImages:
         initialTeethLandmarks = getInitialTeethLandmarksInImage(testImage, meanTeethLandmarks, landmarks, trainingImages)
-        markedImage = searchForTeethInImage(testImage, initialTeethLandmarks, landmarkWeights, componentModels, grayscaleModelMeans, grayscaleModelCovarianceMatrices, nbOfGsTestSamplesPerSide, show)
+        markedImage = searchForTeethInImage(testImage, initialTeethLandmarks, landmarkWeights, componentModels, grayscaleModelMeans, grayscaleModelCovarianceMatrices, nbOfGsTestSamplesPerSide, showIntermediate, showTooth)
         markedImages.append(markedImage)
     #return all marked test set images
     return markedImages
         
 if __name__ == '__main__':
-    markedImages = searchForTeethInImages(20, 80, cutOffValue=99.99, nbOfPrincipalComponents=None, show=True)
+    markedImages = searchForTeethInImages(10, 30, cutOffValue=98, nbOfPrincipalComponents=None, showIntermediate=False, showTooth=True)
     for img in markedImages:
         small = cv2.resize(img, (0,0), fx=0.5, fy=0.5) 
         cv2.imshow('search results',small)
