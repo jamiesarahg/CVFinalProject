@@ -3,6 +3,8 @@ import cv2.cv as cv
 import os
 import fnmatch
 import copy
+import time
+
 def plot1toothLandmarkonImage(img, E):       
         x = 0
         y = 1
@@ -72,14 +74,17 @@ def show_landmarks_on_image_dynamic(img, landmarks, name='showing landmarks'):
     cv2.imshow(name,small)
     cv2.waitKey(0)
     
-def show_landmarks_one_tooth_on_image_dynamic(img, landmarks, name='showing landmarks'):
+def show_landmarks_one_tooth_on_image_dynamic(img, landmarks, name='showing landmarks', waitkey=True):
     #landmarks is an array of landmark data for one shape
     image = copy.deepcopy(img)
     for i in range(len(landmarks)/2):
         cv2.circle(image,(int(landmarks[2*i]),int(landmarks[2*i+1])),1,cv2.cv.CV_RGB(255, 255, 255),2, 8, 0 )
     small = cv2.resize(image, (0,0), fx=0.3, fy=0.3) 
     cv2.imshow(name,small)
-    cv2.waitKey(0)
+    if waitkey:
+        cv2.waitKey(0)
+    else:
+        time.sleep(1)
     return image
     
 def markLandmarksInImage(image, landmarks):

@@ -7,6 +7,7 @@ import alignment
 import modeling
 import tools
 import copy
+import searching
 
 def calculateAllLandmarkNormals(allLandmarks):
     #landmarks is a three dimentional array of the images, each with arrays for the eight teeth, each with the landmark data
@@ -268,7 +269,7 @@ def buildAllGreyscaleModels(landmarks, nbOfSamplesPerSide, grayscaleImages, show
     
 def calculateNewLandmarkWithDerivativeGrayscaleModel(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, nbOfSamplesPerSide, modelMean, modelCovarMatrix, grayscaleImage):
     m = nbOfSamplesPerSide
-    k = (len(modelMean)-1)/2
+    k = len(modelMean)/2
     if(m <= k):
         print 'M is not larger than k!!'
     #retrieve the pixelcoordinates for all the necessary pixels on the landmark normal (= 2*m + 1 pixels)
@@ -284,13 +285,13 @@ def calculateNewLandmarkWithDerivativeGrayscaleModel(landmarkX, landmarkY, landm
     #retrieve the derivatives for all pixelvalues
     allDerivativeValues = calculateDerivatives(allPixelValues)
     #construct 2*(m-k)+1 samples to compare to the greyscale model
-    fitValues = []
+    fitValues = np.zeros([2*(m-k)+1])
     for i in range(2*(m-k)+1):
         sampleDerivatives = allDerivativeValues[i:(i+2*k)]
         sampleDerivatives = normalizeValues(sampleDerivatives)
         #compare sample to greyscale model
         fitMeasure = mahalanobisDistance(sampleDerivatives, modelMean, modelCovarMatrix)
-        fitValues.append(fitMeasure)
+        fitValues[i] = fitMeasure
     #get index of best fitting point (smallest fit value)
     sortedFitIndices = fitValues.argsort()
     indexOfBestPixel = sortedFitIndices[0] + k
@@ -305,7 +306,15 @@ def mahalanobisDistance(sample, mean, covarianceMatrix):
     if(len(mean)!=d or d1!=d or d2!=d):
         print 'Dimensions are incorrect!'
     difference = np.matrix(sample - mean)
-    result = np.matrix.transpose(difference) * np.linalg.inv(covarianceMatrix) * difference
+    try:
+        invCovarMatrix = np.linalg.inv(covarianceMatrix)
+    except np.linalg.linalg.LinAlgError as err:
+        if 'Singular matrix' in err.message:
+            invCovarMatrix = np.linalg.pinv(covarianceMatrix)
+        else:
+            raise
+    result = np.dot(difference, invCovarMatrix)
+    result = np.dot(np.array(result), np.transpose(difference))
     return result
     
 def calculateNewLandmarksForToothInImage(landmarks, nbOfSamplesPerSide, grayscaleModelMeans, grayscaleModelCovarMatrices, gradientGreyscaleImage):
@@ -322,8 +331,14 @@ def calculateNewLandmarksForToothInImage(landmarks, nbOfSamplesPerSide, grayscal
     return newLandmarks
     
 if __name__ == '__main__':
-    landmarks = prep.load_landmark_data('_Data/Landmarks/original', 14)
+    '''landmarks = prep.load_landmark_data('_Data/Landmarks/original', 14)
     images = prep.import_images('_Data/Radiographs', False, 0)
     prepImages = prep.preprocess_all_images(images, False)
     #prepImages = prep.convertImagesToGrayscale(prepImages, True)
-    buildAllGreyscaleModels(landmarks, 10, prepImages, showPoints=True)
+    buildAllGreyscaleModels(landmarks, 10, prepImages, showPoints=False)'''
+    markedImages = searching.searchForTeethInImages(20, 40, None, 40)
+    for img in markedImages:
+        small = cv2.resize(img, (0,0), fx=0.5, fy=0.5) 
+        cv2.imshow('search results',small)
+        cv2.waitKey(0)
+    cv2.destroyAllWindows()

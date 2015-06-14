@@ -4,6 +4,7 @@ import cv
 
 import importingAndPreprocessing as prep
 import tools
+import copy
 
 def plotPoints(points, image):
     for point in points:
@@ -63,31 +64,30 @@ def autoInit(landmarks, images):
     shapeOfImages = {}
     avePositionsX = []
     avePositionsY = []
-    for i in range(14):
+    for i in range(len(images)):
         shape = images[i].shape
         shapeOfImages[i] = shape
     
-    for toothNum in range(0,8):
+    for toothNum in range(landmarks.shape[1]):
         x=0
         y=0
         toothLandmarks = tools.getLandmarksOfTooth(landmarks, toothNum)
-        for i in range(14):
+        for i in range(len(images)):
             imshape = shapeOfImages[i]
-            print imshape
-            for j in range(40):
-                x += toothLandmarks[i][j * 2]/imshape[0]
-                y += toothLandmarks[i][j * 2 + 1]/imshape[1]
-        x = x/560
-        y = y/560
+            #print imshape
+            for j in range(landmarks.shape[2]/2):
+                x += toothLandmarks[i][j * 2]
+                y += toothLandmarks[i][j * 2 + 1]
+            x = x/imshape[1]
+            y = y/imshape[0]
+        x = x/(len(images)*landmarks.shape[2]/2)
+        y = y/(len(images)*landmarks.shape[2]/2)
         avePositionsX.append(x)
         avePositionsY.append(y)
-        
-    print avePositionsX, avePositionsY
+    return avePositionsX, avePositionsY
 
-    
-    
-
-def manualInitialization(img):
+def manualInitialization(image):
+    img = copy.deepcopy(image)
     """
     This function allows for manual Initialization. 
     Input: a cv loaded image

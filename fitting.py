@@ -44,8 +44,8 @@ def adaptToModelBoundaries(b, principalEigenvalues):
     maxValue = np.max(principalEigenvalues)
     adaptedB = np.zeros(b.shape)
     for i in range(len(b)):
-        #rightBoundary = 3*math.sqrt(principalEigenvalues[i])
-        rightBoundary = 3*math.sqrt(maxValue)
+        rightBoundary = 3*math.sqrt(principalEigenvalues[i])
+        #rightBoundary = 3*math.sqrt(maxValue)
         leftBoundary = -rightBoundary
         if (b[i] < leftBoundary):
             adaptedB[i] = leftBoundary
