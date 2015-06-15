@@ -111,7 +111,7 @@ def searchForTeethInImages(nbOfGsModelSamplesPerSide=10, nbOfGsTestSamplesPerSid
     trainingImages = prep.import_images('_Data/Radiographs', False)
     trainingImages =  prep.preprocess_all_images(trainingImages, False)
     #import and preprocess test set images
-    testImages = prep.import_images('_Data/Radiographs/test', False, 14)
+    testImages = prep.import_images('_Data/Radiographs/extra', False, 14)
     testImages =  prep.preprocess_all_images(testImages, False)
     #import landmarks for training set images
     landmarks = prep.load_landmark_data('_Data/Landmarks/original', 14)
