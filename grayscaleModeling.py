@@ -159,13 +159,14 @@ def calculateDerivatives(pixelValues):
     derivativeValues = []
     for i in range(len(pixelValues)-1):
         if(pixelValues[i+1] >= pixelValues[i]):
-            derivative = int(pixelValues[i+1] - pixelValues[i])
+            derivative = float(pixelValues[i+1] - pixelValues[i])
         else:
-            derivative = -int((pixelValues[i] - pixelValues[i+1]))
+            derivative = -float((pixelValues[i] - pixelValues[i+1]))
         derivativeValues.append(derivative)
     return derivativeValues
     
-def normalizeValues(values):
+def normalizeValues(vals):
+    values = copy.deepcopy(vals)
     total = absoluteSum(values)
     if (total == 0):
         total = 1
@@ -284,6 +285,8 @@ def calculateNewLandmarkWithDerivativeGrayscaleModel(landmarkX, landmarkY, landm
         allPixelValues.append(pixelValue)
     #retrieve the derivatives for all pixelvalues
     allDerivativeValues = calculateDerivatives(allPixelValues)
+    #debugging(landmarkX, landmarkY, landmarkNormalX, landmarkNormalY, nbOfSamplesPerSide, grayscaleImage)
+    #print allDerivativeValues
     #construct 2*(m-k)+1 samples to compare to the greyscale model
     fitValues = np.zeros([2*(m-k)+1])
     for i in range(2*(m-k)+1):
@@ -299,6 +302,18 @@ def calculateNewLandmarkWithDerivativeGrayscaleModel(landmarkX, landmarkY, landm
     pixelXIndex = 2*indexOfBestPixel
     pixelYIndex = pixelXIndex + 1
     return allPixels[pixelXIndex], allPixels[pixelYIndex]
+    
+def debugging(xLandmark, yLandmark, xNormal, yNormal, normalScale, img):
+    image = copy.deepcopy(img)
+    cv2.circle(image,(int(xLandmark),int(yLandmark)),1,cv2.cv.CV_RGB(255, 255, 255),2, 8, 0 )
+    nx1 = xLandmark + normalScale*xNormal
+    ny1 = yLandmark + normalScale*yNormal
+    nx2 = xLandmark - normalScale*xNormal
+    ny2 = yLandmark - normalScale*yNormal
+    cv2.line(image, (int(nx1),int(ny1)), (int(nx2),int(ny2)), cv2.cv.CV_RGB(255, 255, 255), 1)
+    cv2.imshow('plottedLandmarkAndNormal',cv2.resize(image, (0,0), fx=0.5, fy=0.5))
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     
 def mahalanobisDistance(sample, mean, covarianceMatrix):
     d = len(sample)

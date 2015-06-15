@@ -46,8 +46,9 @@ def getInitialToothLandmarksInImage(targetImage, meanToothLandmarks, initXCenter
     return initialToothLandmarks
     
 def getInitialTeethLandmarksInImage(targetImage, meanTeethLandmarks, allLandmarks, trainingImages):
+    initialXCenters, initialYCenters = init.initialization(allLandmarks)
     #initialXCenters, initialYCenters = getAutoInitialTeethCentersInImage(targetImage, allLandmarks, trainingImages)
-    initialXCenters, initialYCenters = getManualInitialTeethCentersInImage(targetImage, allLandmarks, trainingImages)
+    #initialXCenters, initialYCenters = getManualInitialTeethCentersInImage(targetImage, allLandmarks, trainingImages)
     initialTeethLandmarks = copy.deepcopy(meanTeethLandmarks)
     for toothNb in range(len(meanTeethLandmarks)):
         initialTeethLandmarks[toothNb] = getInitialToothLandmarksInImage(targetImage, meanTeethLandmarks[toothNb], initialXCenters[toothNb], initialYCenters[toothNb])
@@ -68,7 +69,7 @@ def searchForToothInImage(cleanImage, initialToothLandmarks, landmarkWeights, co
     
     converged = False
     pleaseStop = False
-    minDifference = 10e-8
+    minDifference = 10e-6
     count = 1
     while not (converged or pleaseStop):
         try:
@@ -77,15 +78,13 @@ def searchForToothInImage(cleanImage, initialToothLandmarks, landmarkWeights, co
             intermediateToothLandmarks = gs.calculateNewLandmarksForToothInImage(prevModelLandmarks, nbOfGsTestSamplesPerSide, gsModelMeans, gsModelCovarMatrices, cleanImage)
             nextTransformation, nextB, nextModelLandmarks = fitting.matchModelToShape(meanToothLandmarks, principalComponentVariances, principalComponents, intermediateToothLandmarks, landmarkWeights)
             converged = searchConvergenceCheck(prevB, nextB, prevTransformation, nextTransformation, minDifference)
-            if count is 100:
-                minDifference = 10e-6
-            elif count is 200:
+            if count is 50:
                 minDifference = 10e-4
-            elif count is 300:
+            elif count is 100:
                 minDifference = 10e-2
-            elif count is 400:
+            elif count is 150:
                 minDifference = 10e-1
-            elif count is 500:
+            elif count is 300:
                 pleaseStop = True
             prevModelLandmarks = nextModelLandmarks
             prevB = nextB
@@ -109,10 +108,21 @@ def searchForTeethInImage(image, initialTeethLandmarks, landmarkWeights, compone
 def searchForTeethInImages(nbOfGsModelSamplesPerSide=10, nbOfGsTestSamplesPerSide=20, cutOffValue=None, nbOfPrincipalComponents=40, showIntermediate=False, showTooth=True):
     #import and preprocess training set images
     trainingImages = prep.import_images('_Data/Radiographs', False)
-    trainingImages =  prep.preprocess_all_images(trainingImages, False)
+    trainingHistograms =  prep.preprocess_all_images(trainingImages, False)
+    #trainingEdges = prep.allDetectEdges(trainingImages)
+    #trainingImages = prep.combineAll(trainingHistograms, trainingEdges, show=False)
+    trainingImages = trainingHistograms
     #import and preprocess test set images
+<<<<<<< HEAD
     testImages = prep.import_images('_Data/Radiographs/extra', False, 14)
     testImages =  prep.preprocess_all_images(testImages, False)
+=======
+    testImages = prep.import_images('_Data/Radiographs/test', False, 14)
+    testHistograms =  prep.preprocess_all_images(testImages, False)
+    #testEdges = prep.allDetectEdges(testImages)
+    #testImages = prep.combineAll(testHistograms, testEdges, show=False)
+    testImages = testHistograms
+>>>>>>> origin/master
     #import landmarks for training set images
     landmarks = prep.load_landmark_data('_Data/Landmarks/original', 14)
     #calculate landmark weights
@@ -135,7 +145,7 @@ def searchForTeethInImages(nbOfGsModelSamplesPerSide=10, nbOfGsTestSamplesPerSid
     return markedImages
         
 if __name__ == '__main__':
-    markedImages = searchForTeethInImages(10, 30, cutOffValue=98, nbOfPrincipalComponents=None, showIntermediate=False, showTooth=True)
+    markedImages = searchForTeethInImages(20, 30, cutOffValue=98, nbOfPrincipalComponents=None, showIntermediate=True, showTooth=True)
     for img in markedImages:
         small = cv2.resize(img, (0,0), fx=0.5, fy=0.5) 
         cv2.imshow('search results',small)
